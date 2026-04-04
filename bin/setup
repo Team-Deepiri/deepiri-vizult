@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+echo "==> deepiri-vizult setup (root: $ROOT)"
+
+if ! command -v ruby >/dev/null 2>&1; then
+  echo "!!  Ruby is not installed or not on PATH." >&2
+  exit 1
+fi
+
+ruby -e 'maj, min = RUBY_VERSION.split(".").map(&:to_i); exit(maj >= 3 ? 0 : 1)' || {
+  echo "!!  Ruby 3.0+ required (found $(ruby -v))." >&2
+  exit 1
+}
+echo "    $(ruby -v)"
+
+if ! command -v bundle >/dev/null 2>&1; then
+  echo "!!  Bundler not found. Install with: gem install bundler" >&2
+  exit 1
+fi
+
+bundle install
+
+echo ""
+echo "==> Ready."
+echo "    bundle exec ruby exe/vizult help"
+echo "    bundle exec ruby exe/vizult scan ."
+echo "    bundle exec ruby exe/vizult open"
+echo ""
+
+if [[ "${1:-}" == "--verify" ]]; then
+  echo "==> Running RSpec..."
+  bundle exec rspec
+  echo "==> Verify OK."
+fi

@@ -1,0 +1,4 @@
+* text=auto eol=lf
+*.rb text eol=lf
+exe/* text eol=lf
+bin/* text eol=lf
