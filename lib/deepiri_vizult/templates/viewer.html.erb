@@ -21,6 +21,8 @@
       --canvas-grid: rgba(15, 23, 42, 0.06);
       --panel: #1e293b;
       --success: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
       --font-ui: "Outfit", system-ui, sans-serif;
       --font-mono: "JetBrains Mono", ui-monospace, monospace;
     }
@@ -31,6 +33,7 @@
       display: flex;
       color: var(--sidebar-text);
       background: var(--sidebar-bg);
+      overflow: hidden;
     }
     #sidebar {
       width: 300px;
@@ -41,9 +44,39 @@
       overflow: hidden;
     }
     .sidebar-scroll {
-      flex: 1;
+      flex: 1 1 0;
+      min-height: 0;
       overflow-y: auto;
-      padding: 1.25rem 1.1rem 1.5rem;
+      scrollbar-gutter: stable;
+      padding: 1rem 1.1rem 1.15rem;
+    }
+    .sidebar-scroll, #popup-detail {
+      scrollbar-color: #334155 transparent;
+      scrollbar-width: thin;
+    }
+    .sidebar-scroll::-webkit-scrollbar,
+    #popup-detail::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    .sidebar-scroll::-webkit-scrollbar-track,
+    #popup-detail::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .sidebar-scroll::-webkit-scrollbar-thumb,
+    #popup-detail::-webkit-scrollbar-thumb {
+      background-color: #334155;
+      border-radius: 6px;
+      border: 2px solid transparent;
+      background-clip: padding-box;
+    }
+    .sidebar-scroll::-webkit-scrollbar-thumb:hover,
+    #popup-detail::-webkit-scrollbar-thumb:hover {
+      background-color: #475569;
+    }
+    .sidebar-scroll::-webkit-scrollbar-corner,
+    #popup-detail::-webkit-scrollbar-corner {
+      background: transparent;
     }
     .brand {
       display: flex;
@@ -91,10 +124,10 @@
       color: var(--sidebar-muted);
     }
     .hint {
-      font-size: 0.78rem;
-      line-height: 1.45;
+      font-size: 0.72rem;
+      line-height: 1.5;
       color: var(--sidebar-muted);
-      margin: 0 0 1.1rem;
+      margin: 0;
     }
     .section-label {
       font-size: 0.65rem;
@@ -102,9 +135,18 @@
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--sidebar-muted);
-      margin: 1rem 0 0.4rem;
+      margin: 1.25rem 0 0.5rem;
     }
-    .section-label:first-of-type { margin-top: 0; }
+    .section-label::before {
+      content: "";
+      display: block;
+      height: 2px;
+      background: #334155;
+      border-radius: 1px;
+      margin: 0 -12px 0.85rem;
+    }
+    .section-label:first-of-type { margin-top: 0.25rem; }
+    .section-label:first-of-type::before { display: none; }
     label.field-label {
       display: block;
       font-size: 0.72rem;
@@ -131,7 +173,6 @@
     .btn-row {
       display: flex;
       gap: 0.45rem;
-      margin-top: 0.75rem;
     }
     button.btn {
       flex: 1;
@@ -157,56 +198,251 @@
     button.btn-primary:hover {
       background: rgba(56, 189, 248, 0.2);
     }
-    .legend {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.35rem 0.5rem;
-      font-size: 0.72rem;
-      color: var(--sidebar-muted);
-      margin-top: 0.5rem;
-    }
-    .legend span {
-      display: flex;
-      align-items: center;
-      gap: 0.35rem;
-    }
-    .swatch {
-      width: 10px;
-      height: 10px;
-      border-radius: 2px;
-      border: 1px solid rgba(255,255,255,0.12);
-    }
-    #detail-wrap {
+    #sidebar-footer {
+      flex: 0 0 auto;
       border-top: 1px solid var(--sidebar-border);
       background: #020617;
-      padding: 0.85rem 1.1rem 1rem;
-      max-height: 38vh;
-      min-height: 120px;
+      padding: 0.85rem 1.1rem 0.85rem;
       display: flex;
       flex-direction: column;
+      gap: 0.7rem;
     }
-    #detail-wrap h2 {
+    #sidebar-footer h2 {
       font-size: 0.65rem;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--sidebar-muted);
-      margin: 0 0 0.5rem;
+      margin: 0 0 0.55rem;
     }
-    #detail {
-      font-family: var(--font-mono);
+    .footer-divider {
+      height: 2px;
+      background: #334155;
+      border-radius: 1px;
+      margin: 0 -12px;
+    }
+    .legend {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem 0.6rem;
       font-size: 0.72rem;
-      line-height: 1.5;
-      color: #cbd5e1;
-      white-space: pre-wrap;
-      word-break: break-all;
-      overflow-y: auto;
+      color: var(--sidebar-muted);
+    }
+    .legend span {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+    .swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      border: 1.5px solid rgba(255,255,255,0.18);
+      flex-shrink: 0;
+    }
+    .edge-swatch {
+      width: 20px;
+      height: 2px;
+      border-radius: 1px;
+      flex-shrink: 0;
+    }
+    .legend-edges {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+    #node-popup {
+      position: fixed;
+      z-index: 50;
+      width: 460px;
+      max-height: 360px;
+      background: #020617;
+      border: 1px solid var(--sidebar-border);
+      border-radius: 12px;
+      box-shadow: 0 18px 40px -12px rgba(2, 6, 23, 0.55),
+                  0 4px 10px -4px rgba(2, 6, 23, 0.4);
+      color: var(--sidebar-text);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform-origin: top left;
+      opacity: 1;
+      transition: opacity 120ms ease-out, transform 120ms ease-out;
+    }
+    #node-popup.hidden {
+      opacity: 0;
+      transform: scale(0.96);
+      pointer-events: none;
+    }
+    .popup-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding: 0.65rem 0.65rem 0.6rem 0.85rem;
+      border-bottom: 1px solid var(--sidebar-border);
+      background: linear-gradient(180deg, #0b1224 0%, #020617 100%);
+    }
+    .popup-title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      min-width: 0;
       flex: 1;
     }
-    #detail.empty {
+    #popup-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #f1f5f9;
+      margin: 0;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+      word-break: normal;
+    }
+    .type-pill {
+      align-self: flex-start;
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      border: 1px solid var(--sidebar-border);
+      background: var(--panel);
+      color: var(--sidebar-muted);
+      white-space: nowrap;
+    }
+    .type-pill.type-service  { background:#bbf7d0; border-color:#16a34a; color:#14532d; }
+    .type-pill.type-repo     { background:#fde68a; border-color:#ca8a04; color:#422006; }
+    .type-pill.type-stream   { background:#93c5fd; border-color:#2563eb; color:#1e3a5f; }
+    .type-pill.type-database { background:#fecaca; border-color:#dc2626; color:#450a0a; }
+    .type-pill.type-default,
+    .type-pill.type-endpoint { background:#c7d2fe; border-color:#6366f1; color:#1e1b4b; }
+    .edge-item .type-pill {
+      font-size: 0.58rem;
+      padding: 0.05rem 0.4rem;
+      letter-spacing: 0.05em;
+      border-radius: 4px;
+      border: none;
+      font-weight: 700;
+      text-transform: lowercase;
+    }
+    .edge-item .type-pill.type-service  { background: rgba(34, 197, 94, 0.16);  color: #4ade80; }
+    .edge-item .type-pill.type-repo     { background: rgba(202, 138, 4, 0.18);  color: #facc15; }
+    .edge-item .type-pill.type-stream   { background: rgba(37, 99, 235, 0.20);  color: #93c5fd; }
+    .edge-item .type-pill.type-database { background: rgba(220, 38, 38, 0.18);  color: #fca5a5; }
+    .edge-item .type-pill.type-default,
+    .edge-item .type-pill.type-endpoint { background: rgba(99, 102, 241, 0.20); color: #c7d2fe; }
+    .popup-close {
+      background: transparent;
+      border: 0;
+      color: var(--sidebar-muted);
+      font-size: 1.15rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0.15rem 0.4rem;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+    .popup-close:hover {
+      color: var(--sidebar-text);
+      background: var(--panel);
+    }
+    #popup-detail {
+      font-family: var(--font-ui);
+      font-size: 0.74rem;
+      line-height: 1.45;
+      color: #cbd5e1;
+      overflow-y: auto;
+      scrollbar-gutter: stable;
+      padding: 0.65rem 0.75rem 0.8rem;
+      min-width: 0;
+      display: grid;
+      grid-template-columns: 1fr 1px 1fr;
+      gap: 0.4rem 0.7rem;
+    }
+    .edge-column {
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      min-width: 0;
+    }
+    .edge-column-title {
+      display: flex;
+      align-items: baseline;
+      gap: 0.35rem;
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--sidebar-muted);
+      margin: 0 0 0.15rem;
+    }
+    .edge-column-title .count {
+      font-weight: 500;
+      color: #64748b;
+    }
+    .edge-column-divider {
+      width: 1px;
+      background: var(--sidebar-border);
+      opacity: 0.6;
+    }
+    .edge-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      min-width: 0;
+    }
+    .edge-item-row {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex-wrap: nowrap;
+      min-width: 0;
+    }
+    .edge-item-row.meta {
+      gap: 0.3rem;
+      overflow: hidden;
+    }
+    .edge-item-row.meta > * {
+      flex-shrink: 0;
+    }
+    .edge-arrow {
+      font-family: var(--font-mono);
+      color: var(--sidebar-muted);
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .edge-peer {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: #e2e8f0;
+      overflow-wrap: anywhere;
+      word-break: normal;
+      flex: 1;
+      min-width: 0;
+    }
+    .edge-label {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      padding: 0.05rem 0.4rem;
+      border-radius: 4px;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--accent);
+    }
+    .edge-confidence {
+      font-size: 0.58rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.05rem 0.4rem;
+      border-radius: 4px;
+    }
+    .edge-confidence.high   { background: rgba(34, 197, 94, 0.16);  color: #4ade80; }
+    .edge-confidence.medium { background: rgba(245, 158, 11, 0.16); color: #fbbf24; }
+    .edge-confidence.low    { background: rgba(148, 163, 184, 0.16); color: #94a3b8; }
+    .empty-row {
+      font-size: 0.7rem;
       color: #64748b;
       font-style: italic;
-      font-family: var(--font-ui);
     }
     #cy {
       flex: 1;
@@ -217,7 +453,10 @@
         linear-gradient(var(--canvas-grid) 1px, transparent 1px),
         linear-gradient(90deg, var(--canvas-grid) 1px, transparent 1px);
       background-size: 24px 24px;
+      cursor: grab;
     }
+    #cy.node-hover { cursor: pointer; }
+    #cy.grabbing { cursor: grabbing; }
   </style>
 </head>
 <body>
@@ -231,8 +470,6 @@
         <div class="stat"><strong><%= node_count %></strong><small>nodes</small></div>
         <div class="stat"><strong><%= edge_count %></strong><small>edges</small></div>
       </div>
-      <p class="hint">Pan and zoom the canvas. Click a node for its edges. Click empty space to clear.</p>
-
       <div class="section-label">Find</div>
       <label class="field-label" for="search">Search</label>
       <input id="search" type="search" placeholder="id or label…" autocomplete="off"/>
@@ -271,26 +508,47 @@
         <option value="scan_overlay">scan_overlay</option>
       </select>
 
+      <div class="section-label">View</div>
       <div class="btn-row">
-        <button type="button" class="btn btn-primary" id="btnFit" title="Fit graph in view">Fit</button>
+        <button type="button" class="btn" id="btnFit" title="Fit graph in view">Fit</button>
         <button type="button" class="btn" id="btnLayout" title="Re-run force layout">Layout</button>
       </div>
-
-      <div class="section-label">Node colors</div>
-      <div class="legend">
-        <span><i class="swatch" style="background:#c7d2fe"></i>default</span>
-        <span><i class="swatch" style="background:#bbf7d0"></i>service</span>
-        <span><i class="swatch" style="background:#fde68a"></i>repo</span>
-        <span><i class="swatch" style="background:#93c5fd"></i>stream</span>
-        <span><i class="swatch" style="background:#fecaca"></i>database</span>
-      </div>
     </div>
-    <div id="detail-wrap">
-      <h2>Selection</h2>
-      <div id="detail" class="empty">No node selected.</div>
+    <div id="sidebar-footer">
+      <div>
+        <h2>Node colors</h2>
+        <div class="legend">
+          <span><i class="swatch" style="background:#c7d2fe;border-color:#6366f1"></i>default</span>
+          <span><i class="swatch" style="background:#bbf7d0;border-color:#16a34a"></i>service</span>
+          <span><i class="swatch" style="background:#fde68a;border-color:#ca8a04"></i>repo</span>
+          <span><i class="swatch" style="background:#93c5fd;border-color:#2563eb"></i>stream</span>
+          <span><i class="swatch" style="background:#fecaca;border-color:#dc2626"></i>database</span>
+        </div>
+      </div>
+      <div class="footer-divider" aria-hidden="true"></div>
+      <div>
+        <h2>Edge confidence</h2>
+        <div class="legend legend-edges">
+          <span><i class="edge-swatch" style="background:#22c55e"></i>high</span>
+          <span><i class="edge-swatch" style="background:#f59e0b"></i>medium</span>
+          <span><i class="edge-swatch" style="background:#64748b"></i>low</span>
+        </div>
+      </div>
+      <div class="footer-divider" aria-hidden="true"></div>
+      <p class="hint">Pan and zoom the canvas. Click a node to open its details next to it. Click empty space (or press Esc) to close.</p>
     </div>
   </aside>
   <div id="cy" role="application" aria-label="Graph canvas"></div>
+  <div id="node-popup" class="hidden" role="dialog" aria-label="Selected node details" aria-hidden="true">
+    <div class="popup-header">
+      <div class="popup-title-block">
+        <h2 id="popup-title">Selection</h2>
+        <span class="type-pill" id="popup-type">node</span>
+      </div>
+      <button type="button" class="popup-close" id="popupClose" aria-label="Close details">×</button>
+    </div>
+    <div id="popup-detail"></div>
+  </div>
 
   <script type="application/json" id="vizult-elements"><%= elements_json %></script>
   <script type="application/json" id="vizult-graph"><%= graph_json %></script>
@@ -298,16 +556,80 @@
 (function() {
   var raw = document.getElementById('vizult-elements').textContent;
   var elements = JSON.parse(raw);
-  var detailEl = document.getElementById('detail');
+  var popupEl = document.getElementById('node-popup');
+  var popupDetailEl = document.getElementById('popup-detail');
+  var popupTitleEl = document.getElementById('popup-title');
+  var popupTypeEl = document.getElementById('popup-type');
+  var popupCloseEl = document.getElementById('popupClose');
+  var selectedNodeId = null;
+  var POPUP_GAP = 18;
+  var POPUP_MARGIN = 12;
+  var KNOWN_TYPES = { service:1, repo:1, stream:1, database:1, endpoint:1 };
 
-  function setDetailEmpty() {
-    detailEl.textContent = 'No node selected.';
-    detailEl.classList.add('empty');
+  function el(tag, className, text) {
+    var e = document.createElement(tag);
+    if (className) e.className = className;
+    if (text != null) e.textContent = text;
+    return e;
   }
 
-  function setDetailText(text) {
-    detailEl.textContent = text;
-    detailEl.classList.remove('empty');
+  function confidenceClass(c) {
+    if (c === 'high' || c === 'medium' || c === 'low') return c;
+    return 'medium';
+  }
+
+  function pillClassForType(t) {
+    return 'type-pill type-' + (KNOWN_TYPES[t] ? t : 'default');
+  }
+
+  function buildEdgeItem(arrow, peerId, peerType, label, confidence) {
+    var item = el('div', 'edge-item');
+    var row = el('div', 'edge-item-row');
+    row.appendChild(el('span', 'edge-arrow', arrow));
+    row.appendChild(el('span', 'edge-peer', peerId));
+    item.appendChild(row);
+    var meta = el('div', 'edge-item-row meta');
+    if (peerType) meta.appendChild(el('span', pillClassForType(peerType), peerType));
+    if (label) meta.appendChild(el('span', 'edge-label', label));
+    var conf = confidence || 'medium';
+    meta.appendChild(el('span', 'edge-confidence ' + confidenceClass(conf), conf));
+    item.appendChild(meta);
+    return item;
+  }
+
+  function buildEdgeColumn(title, edges, arrow, peerKey) {
+    var col = el('div', 'edge-column');
+    var heading = el('h3', 'edge-column-title');
+    heading.appendChild(document.createTextNode(title));
+    heading.appendChild(el('span', 'count', '(' + edges.length + ')'));
+    col.appendChild(heading);
+    if (edges.length === 0) {
+      col.appendChild(el('div', 'empty-row', 'None'));
+      return col;
+    }
+    edges.forEach(function(e) {
+      var peerId = e.data(peerKey);
+      var peerNode = cy.getElementById(peerId);
+      var peerType = (peerNode && peerNode.length) ? (peerNode.data('type') || '') : '';
+      col.appendChild(buildEdgeItem(
+        arrow,
+        peerId,
+        peerType,
+        e.data('label'),
+        e.data('confidence')
+      ));
+    });
+    return col;
+  }
+
+  function renderDetail(n) {
+    popupDetailEl.replaceChildren();
+    var id = n.id();
+    var out = cy.edges('[source = "' + id + '"]');
+    var inn = cy.edges('[target = "' + id + '"]');
+    popupDetailEl.appendChild(buildEdgeColumn('Outgoing', out, '→', 'target'));
+    popupDetailEl.appendChild(el('div', 'edge-column-divider'));
+    popupDetailEl.appendChild(buildEdgeColumn('Incoming', inn, '←', 'source'));
   }
 
   var cy = cytoscape({
@@ -320,10 +642,12 @@
         'font-family': 'Outfit, system-ui, sans-serif',
         'font-weight': '500',
         'text-wrap': 'wrap',
-        'text-max-width': '120px',
+        'text-max-width': '140px',
+        'text-valign': 'center',
+        'text-halign': 'center',
         'width': 'label',
         'height': 'label',
-        'padding': '10px',
+        'padding': '14px',
         'background-color': '#c7d2fe',
         'border-width': 1.5,
         'border-color': '#6366f1',
@@ -349,11 +673,6 @@
         'border-color': '#dc2626',
         'color': '#450a0a'
       }},
-      { selector: 'node:selected', style: {
-        'border-width': 3,
-        'border-color': '#38bdf8',
-        'overlay-opacity': 0
-      }},
       { selector: 'edge', style: {
         'width': 2,
         'line-color': '#94a3b8',
@@ -368,45 +687,144 @@
         'text-background-opacity': 0.92,
         'text-background-padding': '2px'
       }},
+      { selector: 'edge[confidence = "high"]', style: {
+        'line-color': '#22c55e',
+        'target-arrow-color': '#22c55e'
+      }},
+      { selector: 'edge[confidence = "medium"]', style: {
+        'line-color': '#f59e0b',
+        'target-arrow-color': '#f59e0b'
+      }},
+      { selector: 'edge[confidence = "low"]', style: {
+        'line-color': '#64748b',
+        'target-arrow-color': '#64748b'
+      }},
       { selector: 'edge[?inferred]', style: {
-        'line-style': 'dashed',
-        'line-color': '#a8a29e',
-        'target-arrow-color': '#a8a29e'
+        'line-style': 'dashed'
       }},
       { selector: 'edge[?scanOverlay]', style: {
-        'line-color': '#16a34a',
-        'target-arrow-color': '#16a34a',
         'width': 3
-      }}
+      }},
+      { selector: '.dimmed', style: {
+        'opacity': 0.3
+      }},
+      { selector: 'edge.dimmed', style: {
+        'opacity': 0.3
+      }},
+      { selector: 'node:selected', style: {
+        'border-width': 3,
+        'border-color': '#3730a3',
+        'overlay-opacity': 0,
+        'opacity': 1
+      }},
+      { selector: 'node[type = "service"]:selected',  style: { 'border-color': '#166534' }},
+      { selector: 'node[type = "repo"]:selected',     style: { 'border-color': '#854d0e' }},
+      { selector: 'node[type = "stream"]:selected',   style: { 'border-color': '#1e3a8a' }},
+      { selector: 'node[type = "database"]:selected', style: { 'border-color': '#7f1d1d' }}
     ],
-    layout: { name: 'cose', animate: false, padding: 28, nodeRepulsion: 4500 }
+    layout: {
+      name: 'cose',
+      animate: false,
+      randomize: false,
+      padding: 28,
+      nodeRepulsion: 4500,
+      componentSpacing: 80
+    }
   });
 
-  cy.fit(undefined, 40);
+  cy.fit(undefined, 64);
+
+  function positionPopup(node) {
+    if (!node || node.length === 0) return;
+    var pos = node.renderedPosition();
+    var rect = cy.container().getBoundingClientRect();
+    popupEl.style.visibility = 'hidden';
+    popupEl.style.left = '0px';
+    popupEl.style.top = '0px';
+    var popupRect = popupEl.getBoundingClientRect();
+    var nodeW = node.renderedWidth();
+    var nodeH = node.renderedHeight();
+    var anchorX = rect.left + pos.x;
+    var anchorY = rect.top + pos.y;
+    var x = anchorX + nodeW / 2 + POPUP_GAP;
+    var y = anchorY - popupRect.height / 2;
+    if (x + popupRect.width > window.innerWidth - POPUP_MARGIN) {
+      x = anchorX - nodeW / 2 - popupRect.width - POPUP_GAP;
+    }
+    if (x < POPUP_MARGIN) x = POPUP_MARGIN;
+    if (y + popupRect.height > window.innerHeight - POPUP_MARGIN) {
+      y = window.innerHeight - popupRect.height - POPUP_MARGIN;
+    }
+    if (y < POPUP_MARGIN) y = POPUP_MARGIN;
+    popupEl.style.left = x + 'px';
+    popupEl.style.top = y + 'px';
+    popupEl.style.visibility = '';
+  }
+
+  var TYPE_PILL_CLASSES = ['type-default'].concat(Object.keys(KNOWN_TYPES).map(function(t) { return 'type-' + t; }));
+
+  function showPopupForNode(n) {
+    selectedNodeId = n.id();
+    popupTitleEl.textContent = n.data('label') || n.id();
+    var t = n.data('type') || '';
+    popupTypeEl.textContent = t || 'node';
+    popupTypeEl.classList.remove.apply(popupTypeEl.classList, TYPE_PILL_CLASSES);
+    var cls = 'type-' + t;
+    popupTypeEl.classList.add(TYPE_PILL_CLASSES.indexOf(cls) !== -1 ? cls : 'type-default');
+    renderDetail(n);
+    popupEl.classList.remove('hidden');
+    popupEl.setAttribute('aria-hidden', 'false');
+    positionPopup(n);
+  }
+
+  function closePopup() {
+    selectedNodeId = null;
+    popupEl.classList.add('hidden');
+    popupEl.setAttribute('aria-hidden', 'true');
+    cy.elements().unselect();
+  }
+
+  function repositionSelected() {
+    if (!selectedNodeId) return;
+    var n = cy.getElementById(selectedNodeId);
+    if (n && n.length) positionPopup(n);
+  }
 
   cy.on('tap', 'node', function(evt) {
-    var n = evt.target;
-    var id = n.id();
-    var out = cy.edges('[source = "' + id + '"]');
-    var inn = cy.edges('[target = "' + id + '"]');
-    var lines = [id, 'type: ' + (n.data('type') || ''), '—'];
-    out.forEach(function(e) {
-      var conf = e.data('confidence') || '';
-      lines.push('→ ' + e.data('target') + '  [' + e.data('label') + ']  ' + conf);
-      var sf = e.data('sourceFile');
-      if (sf) lines.push('   ' + sf + (e.data('line') ? ':' + e.data('line') : ''));
-    });
-    inn.forEach(function(e) {
-      lines.push('← ' + e.data('source') + '  [' + e.data('label') + ']  ' + (e.data('confidence') || ''));
-    });
-    setDetailText(lines.join('\n'));
+    showPopupForNode(evt.target);
   });
 
   cy.on('tap', function(evt) {
-    if (evt.target === cy) {
-      cy.elements().unselect();
-      setDetailEmpty();
+    if (evt.target === cy) closePopup();
+  });
+
+  cy.on('pan zoom resize', repositionSelected);
+  cy.on('position', 'node', function(evt) {
+    if (selectedNodeId && evt.target.id() === selectedNodeId) {
+      positionPopup(evt.target);
     }
+  });
+  window.addEventListener('resize', repositionSelected);
+
+  var cyContainer = cy.container();
+  cy.on('mouseover', 'node', function() { cyContainer.classList.add('node-hover'); });
+  cy.on('mouseout',  'node', function() { cyContainer.classList.remove('node-hover'); });
+  cyContainer.addEventListener('mousedown', function() { cyContainer.classList.add('grabbing'); });
+  window.addEventListener('mouseup', function() { cyContainer.classList.remove('grabbing'); });
+  cyContainer.addEventListener('mouseleave', function() { cyContainer.classList.remove('node-hover'); });
+
+  popupCloseEl.addEventListener('click', closePopup);
+  popupEl.addEventListener('mousedown', function(e) { e.stopPropagation(); });
+
+  document.addEventListener('mousedown', function(e) {
+    if (popupEl.classList.contains('hidden')) return;
+    if (popupEl.contains(e.target)) return;
+    if (cy.container().contains(e.target)) return;
+    closePopup();
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && !popupEl.classList.contains('hidden')) closePopup();
   });
 
   function rankConfidence(c) {
@@ -416,34 +834,31 @@
     return 2;
   }
 
-  function nodeVisible(n, q, nt) {
-    var matchQ = !q || (n.id().toLowerCase().indexOf(q) !== -1) ||
-      ((n.data('label') || '').toLowerCase().indexOf(q) !== -1);
-    var matchT = !nt || n.data('type') === nt;
-    return matchQ && matchT;
-  }
-
   function applyFilters() {
-    var q = (document.getElementById('search').value || '').toLowerCase();
+    var q = (document.getElementById('search').value || '').toLowerCase().trim();
     var nt = document.getElementById('filterType').value;
     var et = document.getElementById('filterEdge').value;
     var fc = document.getElementById('filterConfidence').value;
     var minRank = fc === 'high' ? 3 : (fc === 'medium' ? 2 : 0);
 
+    cy.elements().removeClass('dimmed');
+
     cy.nodes().forEach(function(n) {
-      var ok = nodeVisible(n, q, nt);
-      n.style('display', ok ? 'element' : 'none');
+      var matchesType = !nt || n.data('type') === nt;
+      var matchesSearch = !q ||
+        n.id().toLowerCase().indexOf(q) !== -1 ||
+        (n.data('label') || '').toLowerCase().indexOf(q) !== -1;
+      if (!matchesType || !matchesSearch) n.addClass('dimmed');
     });
 
     cy.edges().forEach(function(e) {
       var okType = !et || e.data('label') === et;
       var cr = rankConfidence(e.data('confidence') || 'medium');
       var okConf = minRank === 0 || cr >= minRank;
-      var s = e.source();
-      var t = e.target();
-      var endsOk = s.style('display') !== 'none' && t.style('display') !== 'none';
-      e.style('display', (okType && okConf && endsOk) ? 'element' : 'none');
+      var endsDim = e.source().hasClass('dimmed') || e.target().hasClass('dimmed');
+      if (!okType || !okConf || endsDim) e.addClass('dimmed');
     });
+    repositionSelected();
   }
 
   document.getElementById('filterType').addEventListener('change', applyFilters);
@@ -452,7 +867,7 @@
   document.getElementById('search').addEventListener('input', applyFilters);
 
   document.getElementById('btnFit').addEventListener('click', function() {
-    cy.fit(undefined, 48);
+    cy.fit(undefined, 64);
   });
   document.getElementById('btnLayout').addEventListener('click', function() {
     cy.layout({
@@ -460,8 +875,10 @@
       animate: true,
       animationDuration: 380,
       animationEasing: 'ease-out-cubic',
+      randomize: false,
       padding: 28,
-      nodeRepulsion: 4500
+      nodeRepulsion: 4500,
+      componentSpacing: 80
     }).run();
   });
 })();

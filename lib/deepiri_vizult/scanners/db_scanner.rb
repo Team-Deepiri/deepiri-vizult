@@ -79,7 +79,6 @@ module DeepiriVizult
             url_line = text[/url\s*=\s*env\("([^"]+)"\)/, 1]
             owner = @path_resolver.owning_service(path, @root)
             db_id = "db:prisma-#{provider}"
-            ensure_db_node("prisma", provider)
             @graph.add_node(id: db_id, type: :database, label: "#{provider} (prisma)", metadata: { provider: provider }) unless @graph.node?(db_id)
 
             if owner

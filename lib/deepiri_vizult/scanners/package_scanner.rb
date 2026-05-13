@@ -68,7 +68,7 @@ module DeepiriVizult
           to = resolve_internal_target(name)
           next unless to
 
-          @graph.add_node(id: from_id, type: :endpoint, label: pkg, metadata: { file: path.to_s }) unless @graph.node?(from_id)
+          ensure_package_node(from_id, pkg, path)
           @graph.add_edge(
             from: from_id,
             to: to,
@@ -106,9 +106,51 @@ module DeepiriVizult
           next unless to
 
           from_id = "package:#{path.relative_path_from(@root)}"
-          @graph.add_node(id: from_id, type: :endpoint, label: "gem", metadata: { file: path.to_s }) unless @graph.node?(from_id)
+          ensure_package_node(from_id, "gem", path)
           @graph.add_edge(from: from_id, to: to, type: :imports, confidence: :low, source_file: path.to_s, metadata: { gem: g })
         end
+      end
+
+      # Adds the endpoint node for this package manifest (if not present) and anchors it under the
+      # deepest repo node whose path is a prefix of the manifest's location. Without this anchor,
+      # `package:*` endpoints float free of any repo and read as stray nodes in the viewer.
+      def ensure_package_node(from_id, label, path)
+        return if @graph.node?(from_id)
+
+        @graph.add_node(id: from_id, type: :endpoint, label: label, metadata: { file: path.to_s })
+
+        owner = owning_repo_id(path)
+        return unless owner
+        return if @graph.edges.any? { |e| e[:from] == owner && e[:to] == from_id && e[:type] == :contains }
+
+        @graph.add_edge(
+          from: owner,
+          to: from_id,
+          type: :contains,
+          confidence: :high,
+          source_file: path.to_s
+        )
+      end
+
+      def owning_repo_id(path)
+        abs = path.expand_path.to_s
+        best_id = nil
+        best_len = -1
+        @graph.nodes.each do |id, node|
+          next unless node[:type] == :repo
+
+          rp = node.dig(:metadata, :path)
+          next if rp.nil? || rp.empty?
+
+          rp_abs = Pathname.new(rp).expand_path.to_s
+          next unless abs.start_with?(rp_abs + File::SEPARATOR) || abs == rp_abs
+
+          if rp_abs.length > best_len
+            best_len = rp_abs.length
+            best_id = id
+          end
+        end
+        best_id || ("repo:#{@root.basename}" if @graph.node?("repo:#{@root.basename}"))
       end
     end
   end

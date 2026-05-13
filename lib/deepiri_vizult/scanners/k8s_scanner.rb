@@ -6,7 +6,7 @@ require "pathname"
 module DeepiriVizult
   module Scanners
     class K8sScanner
-      KINDS = %w[Deployment Service StatefulSet ConfigMap].freeze
+      KINDS = %w[Deployment Service StatefulSet].freeze
 
       def initialize(root:, graph:, registry:, max_depth: 12)
         @root = Pathname.new(root).expand_path
@@ -43,7 +43,7 @@ module DeepiriVizult
         text.split(/^---\s*$/).each do |doc|
           next if doc.strip.empty?
 
-          data = YAML.safe_load(doc, permitted_classes: [Symbol, Time]) rescue nil
+          data = YAML.safe_load(doc, permitted_classes: [Symbol, Time], aliases: true) rescue nil
           next unless data.is_a?(Hash)
 
           kind = data["kind"]
@@ -65,8 +65,6 @@ module DeepiriVizult
           register_service_ports(name, data["spec"])
         when "Deployment", "StatefulSet"
           register_containers(name, data.dig("spec", "template", "spec", "containers"), path)
-        when "ConfigMap"
-          register_configmap(name, data["data"], path)
         end
       end
 
@@ -108,23 +106,6 @@ module DeepiriVizult
 
           @registry.merge_env_refs(deployment_name, refs)
         end
-      end
-
-      def register_configmap(name, data, path)
-        return unless data.is_a?(Hash)
-
-        refs = {}
-        data.each do |k, v|
-          next unless v.is_a?(String)
-
-          refs[k] = v if k.match?(/_URL$|_HOST$|_URI$/i) || v.match?(%r{^https?://})
-        end
-        return if refs.empty?
-
-        cm_id = "endpoint:configmap:#{name}"
-        return if @graph.node?(cm_id)
-
-        @graph.add_node(id: cm_id, type: :endpoint, label: "configmap:#{name}", metadata: { path: path.to_s, env_refs: refs })
       end
     end
   end
