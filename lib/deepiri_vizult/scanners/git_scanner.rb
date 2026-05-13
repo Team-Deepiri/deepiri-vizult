@@ -75,6 +75,7 @@ module DeepiriVizult
 
       def scan_gitmodules
         Pathname.glob(@root.join("**/.gitmodules")).each do |gm|
+          owner_id = ensure_owner_repo(gm.dirname)
           current_sub = nil
           File.foreach(gm, encoding: "UTF-8") do |line|
             if (m = line.match(/^\[submodule "([^"]+)"\]/))
@@ -92,10 +93,41 @@ module DeepiriVizult
                   metadata: { path: full.to_s, submodule: true }
                 )
               end
+              link_submodule(owner_id, rid, gm)
               current_sub = nil
             end
           end
         end
+      end
+
+      # Ensures a repo node exists for the directory that owns a .gitmodules file. The dir basename
+      # is treated as the repo name (matches the rest of the pipeline, which keys repo ids off
+      # path basenames). Returns the repo id.
+      def ensure_owner_repo(dir)
+        rid = "repo:#{dir.basename}"
+        unless @graph.node?(rid)
+          @graph.add_node(
+            id: rid,
+            type: :repo,
+            label: dir.basename.to_s,
+            metadata: { path: dir.to_s }
+          )
+        end
+        rid
+      end
+
+      def link_submodule(owner_id, sub_id, gm_path)
+        return if owner_id == sub_id
+        return if @graph.edges.any? { |e| e[:from] == owner_id && e[:to] == sub_id && e[:type] == :contains }
+
+        @graph.add_edge(
+          from: owner_id,
+          to: sub_id,
+          type: :contains,
+          confidence: :high,
+          source_file: gm_path.to_s,
+          metadata: { submodule: true }
+        )
       end
     end
   end
