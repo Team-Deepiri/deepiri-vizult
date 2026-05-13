@@ -14,7 +14,7 @@ RSpec.describe DeepiriVizult::Scanners::SkaffoldScanner do
     FileUtils.remove_entry(tmpdir)
   end
 
-  it "parses skaffold build artifacts and registers build contexts" do
+  it "parses skaffold build artifacts and registers them as services" do
     FileUtils.mkdir_p(File.join(tmpdir, "svc"))
     File.write(File.join(tmpdir, "skaffold.yaml"), <<~YAML)
       apiVersion: skaffold/v4beta7
@@ -35,10 +35,8 @@ RSpec.describe DeepiriVizult::Scanners::SkaffoldScanner do
 
     described_class.new(root: tmpdir, graph: g, registry: reg, max_depth: 8).scan
 
-    expect(g.nodes.keys.any? { |k| k.start_with?("skaffold:") }).to be true
     expect(reg.services.key?("api-service")).to be true
-    _sk_id, sk_node = g.nodes.find { |id, _| id.to_s.start_with?("skaffold:") }
-    meta = sk_node[:metadata]
-    expect(meta[:manifests]).to include("k8s/deploy.yaml")
+    expect(g.node?("service:api-service")).to be true
+    expect(g.nodes.keys.none? { |k| k.start_with?("skaffold:") }).to be true
   end
 end

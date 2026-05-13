@@ -2,11 +2,12 @@
 
 require "yaml"
 require "pathname"
-require "digest"
 
 module DeepiriVizult
   module Scanners
-    # Parses skaffold.yaml / skaffold.yml: build artifacts (image + context) and kubectl manifest paths.
+    # Parses skaffold.yaml / skaffold.yml: build artifacts (image + context). Each artifact becomes a
+    # service node via register_from_artifact; the skaffold manifest file itself is not represented
+    # as a node (it carried no graph-level meaning and just polluted the canvas with stray endpoints).
     class SkaffoldScanner
       def initialize(root:, graph:, registry:, max_depth: 14)
         @root = Pathname.new(root).expand_path
@@ -37,34 +38,14 @@ module DeepiriVizult
 
       def process_file(path, rel)
         text = File.read(path, encoding: "UTF-8")
-        data = YAML.safe_load(text, permitted_classes: [Symbol, Time]) || {}
+        data = YAML.safe_load(text, permitted_classes: [Symbol, Time], aliases: true) || {}
         return unless data.is_a?(Hash)
 
         artifacts = Array(data.dig("build", "artifacts"))
-        manifests = extract_manifests(data)
+                    .map { |a| artifact_entry(a, path.dirname) }
+                    .compact
 
-        meta = {
-          path: path.to_s,
-          relative: rel.to_s,
-          artifacts: artifacts.map { |a| artifact_entry(a, path.dirname) }.compact,
-          manifests: manifests
-        }
-        return if meta[:artifacts].empty? && meta[:manifests].empty?
-
-        sid = "skaffold:#{Digest::SHA256.hexdigest(rel.to_s)[0, 12]}"
-        @graph.add_node(
-          id: sid,
-          type: :endpoint,
-          label: "skaffold (#{path.basename})",
-          metadata: meta
-        )
-
-        root_repo = "repo:#{@root.basename}"
-        if @graph.node?(root_repo)
-          @graph.add_edge(from: root_repo, to: sid, type: :contains, confidence: :high, source_file: path.to_s)
-        end
-
-        meta[:artifacts].each do |art|
+        artifacts.each do |art|
           next unless art[:context_path]
 
           register_from_artifact(art)
@@ -90,15 +71,6 @@ module DeepiriVizult
           context: ctx,
           context_path: abs_ctx.directory? ? abs_ctx : nil
         }
-      end
-
-      def extract_manifests(data)
-        deploy = data["deploy"] || {}
-        kubectl = deploy["kubectl"] || {}
-        manifests = kubectl["manifests"] || []
-        return [] unless manifests.is_a?(Array)
-
-        manifests.map(&:to_s)
       end
 
       def register_from_artifact(art)

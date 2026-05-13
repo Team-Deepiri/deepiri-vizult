@@ -43,7 +43,7 @@ module DeepiriVizult
 
       def process_file(path)
         text = File.read(path, encoding: "UTF-8")
-        data = YAML.safe_load(text, permitted_classes: [Symbol, Time]) || {}
+        data = YAML.safe_load(text, permitted_classes: [Symbol, Time], aliases: true) || {}
         services = data["services"] || {}
         compose_rel = path.relative_path_from(@root).to_s
 
@@ -129,13 +129,25 @@ module DeepiriVizult
 
       def extract_build_contexts(svc_def, compose_dir)
         dirs = []
-        if (b = svc_def["build"])
-          ctx = b.is_a?(Hash) ? b["context"] : b
-          if ctx
-            d = compose_dir.join(ctx).expand_path
-            dirs << d if d.directory?
-          end
+        b = svc_def["build"]
+        return dirs unless b
+
+        ctx = b.is_a?(Hash) ? b["context"] : b
+        if ctx
+          d = compose_dir.join(ctx).expand_path
+          dirs << d if d.directory?
         end
+
+        # Many services share a broad build context (e.g. `./platform-services`) and disambiguate
+        # via `dockerfile: backend/<svc>/Dockerfile`. The dockerfile's directory is the actual
+        # per-service location and is what PathResolver needs to attribute source files (prisma
+        # schemas, .ts files, etc.) to the right owner.
+        if b.is_a?(Hash) && (df = b["dockerfile"])
+          base = ctx ? compose_dir.join(ctx) : compose_dir
+          df_dir = base.join(File.dirname(df.to_s)).expand_path
+          dirs << df_dir if df_dir.directory? && !dirs.include?(df_dir)
+        end
+
         dirs
       end
 
