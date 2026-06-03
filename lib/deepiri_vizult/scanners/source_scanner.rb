@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "pathname"
+require 'pathname'
 
 module DeepiriVizult
   module Scanners
@@ -9,13 +9,13 @@ module DeepiriVizult
       SKIP_DIRS = %w[node_modules vendor/bundle .git dist build coverage target].freeze
 
       # URL-like strings in code
-      URL_IN_STRING = %r{["'`](https?://[^"'`\s]+)["'`]}.freeze
+      URL_IN_STRING = %r{["'`](https?://[^"'`\s]+)["'`]}
       # process.env.FOO || 'http://...'
-      ENV_DEFAULT = /process\.env\.(\w+)\s*\|\|\s*['"]([^'"]+)['"]/.freeze
-      ENV_GET = /process\.env\[['"](\w+)['"]\]/.freeze
-      OS_GETENV = /os\.getenv\s*\(\s*["'](\w+)["']\s*(?:,\s*["']([^"']*)["'])?\s*\)/.freeze
-      TARGET_PROXY = /target:\s*['"](https?:\/\/[^'"]+)['"]/.freeze
-      PROXY_PASS = /proxy_pass\s+(https?:\/\/[^;\s]+|[^;\s]+);/.freeze
+      ENV_DEFAULT = /process\.env\.(\w+)\s*\|\|\s*['"]([^'"]+)['"]/
+      ENV_GET = /process\.env\[['"](\w+)['"]\]/
+      OS_GETENV = /os\.getenv\s*\(\s*["'](\w+)["']\s*(?:,\s*["']([^"']*)["'])?\s*\)/
+      TARGET_PROXY = %r{target:\s*['"](https?://[^'"]+)['"]}
+      PROXY_PASS = %r{proxy_pass\s+(https?://[^;\s]+|[^;\s]+);}
 
       def initialize(root:, graph:, registry:, max_depth: 12)
         @root = Pathname.new(root).expand_path
@@ -34,7 +34,7 @@ module DeepiriVizult
 
       def source_files
         files = []
-        Dir.glob(@root.join("**/*"), File::FNM_DOTMATCH).each do |p|
+        Dir.glob(@root.join('**/*'), File::FNM_DOTMATCH).each do |p|
           next unless File.file?(p)
 
           rel = Pathname.new(p).relative_path_from(@root)
@@ -51,7 +51,7 @@ module DeepiriVizult
       end
 
       def scan_file(path)
-        text = File.read(path, encoding: "UTF-8")
+        text = File.read(path, encoding: 'UTF-8')
         lines = text.lines
         owner = @path_resolver.owning_service(path, @root)
         owner_id = owner ? "service:#{owner}" : nil
@@ -84,16 +84,16 @@ module DeepiriVizult
             add_http_edge(owner_id, target, path, line_no, :high, :http_proxy) if target
           end
 
-          if (m = line.match(PROXY_PASS))
-            url = m[1]
-            next if url.start_with?("$")
+          next unless (m = line.match(PROXY_PASS))
 
-            target = @url_resolver.resolve_service(url)
-            add_http_edge(owner_id, target, path, line_no, :high, :http_proxy) if target
-          end
+          url = m[1]
+          next if url.start_with?('$')
+
+          target = @url_resolver.resolve_service(url)
+          add_http_edge(owner_id, target, path, line_no, :high, :http_proxy) if target
         end
       rescue ArgumentError, Encoding::CompatibilityError, StandardError => e
-        warn "vizult: skip #{path}: #{e.message}" if ENV["VIZULT_DEBUG"]
+        warn "vizult: skip #{path}: #{e.message}" if ENV['VIZULT_DEBUG']
       end
 
       def add_http_edge(from_id, target_service_name, path, line_no, confidence, type = :http_call)

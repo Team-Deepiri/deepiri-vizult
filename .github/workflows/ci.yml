@@ -1,13 +1,18 @@
 name: CI
 
 on:
-  push:
-    branches: [main, master]
   pull_request:
-    branches: [main, master]
+    branches: [main, dev]
+  push:
+    branches: [main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-  test:
+  lint:
+    name: Lint (RuboCop)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,8 +22,19 @@ jobs:
           ruby-version: "3.2"
           bundler-cache: true
 
-      - name: Bundle install
-        run: bundle install
+      - name: RuboCop
+        run: bundle exec rubocop
+
+  test:
+    name: Test & build gem
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
 
       - name: RSpec
         run: bundle exec rspec

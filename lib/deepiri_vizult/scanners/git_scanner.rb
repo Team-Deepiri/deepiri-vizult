@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-require "pathname"
+require 'pathname'
 
 module DeepiriVizult
   module Scanners
     class GitScanner
-      GIT_REMOTE_RE = %r{\Agit@([^:]+):([^/]+)/([^.]+)(?:\.git)?\z}.freeze
-      HTTPS_REMOTE_RE = %r{\Ahttps?://([^/]+)/([^/]+)/([^/.]+)}.freeze
+      GIT_REMOTE_RE = %r{\Agit@([^:]+):([^/]+)/([^.]+)(?:\.git)?\z}
+      HTTPS_REMOTE_RE = %r{\Ahttps?://([^/]+)/([^/]+)/([^/.]+)}
 
       def initialize(root:, graph:, siblings: true)
         @root = Pathname.new(root).expand_path
@@ -21,7 +21,7 @@ module DeepiriVizult
           @root.parent.each_child do |child|
             next unless child.directory?
 
-            gitdir = child.join(".git")
+            gitdir = child.join('.git')
             next unless gitdir.exist?
 
             next if child.expand_path == @root.expand_path
@@ -47,10 +47,10 @@ module DeepiriVizult
       end
 
       def extract_org_from_git(path, repo_id)
-        config = path.join(".git", "config")
+        config = path.join('.git', 'config')
         return unless config.file?
 
-        text = File.read(config, encoding: "UTF-8")
+        text = File.read(config, encoding: 'UTF-8')
         text.scan(/^\s*url\s*=\s*(.+)$/i) do |m|
           url = m[0].strip
           org = parse_org_from_remote(url)
@@ -70,14 +70,15 @@ module DeepiriVizult
         if (m = url.match(HTTPS_REMOTE_RE))
           return m[2]
         end
+
         nil
       end
 
       def scan_gitmodules
-        Pathname.glob(@root.join("**/.gitmodules")).each do |gm|
+        Pathname.glob(@root.join('**/.gitmodules')).each do |gm|
           owner_id = ensure_owner_repo(gm.dirname)
           current_sub = nil
-          File.foreach(gm, encoding: "UTF-8") do |line|
+          File.foreach(gm, encoding: 'UTF-8') do |line|
             if (m = line.match(/^\[submodule "([^"]+)"\]/))
               current_sub = m[1]
             elsif current_sub && (m = line.match(/^\s*path\s*=\s*(.+)/))

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "uri"
+require 'uri'
 
 module DeepiriVizult
   class UrlResolver
@@ -14,8 +14,8 @@ module DeepiriVizult
 
       s = url_string.to_s.strip
       # strip template ${VAR}
-      s = s.gsub(/\$\{[^}]+\}/, "").gsub(/%\([^)]+\)/, "")
-      return nil if s.empty? || s == "http://" || s == "https://"
+      s = s.gsub(/\$\{[^}]+\}/, '').gsub(/%\([^)]+\)/, '')
+      return nil if s.empty? || s == 'http://' || s == 'https://'
 
       uri = URI.parse((s.match?(%r{\A[\w+.-]+://}) ? s : "http://#{s}"))
       host = uri.host&.downcase
@@ -27,10 +27,11 @@ module DeepiriVizult
           next unless h.downcase == host
 
           cport = data[:ports][:container]
-          if port && cport && port != cport && port != 80 && port != 443
+          if port && cport && port != cport && port != 80 && port != 443 && cport
             # still match if registry has no container port
-            next if cport
+            next
           end
+
           return name
         end
       end

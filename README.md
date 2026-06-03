@@ -63,7 +63,8 @@ Run tests: `bundle exec rake` or `bundle exec rspec`.
 
 ## Verification checklist
 
-- `./bin/setup --verify` — bundle install + full RSpec (same as CI-style check).
+- `./bin/setup --verify` — bundle install + RuboCop + full RSpec (same as CI-style check).
+- `bundle exec rubocop` — style/lint (also runs in CI `lint` job).
 - `bundle exec rspec` — full suite (graph merge, sibling / manifest linkers, HTML viewer, DOT/CSV, submodule paths, scanners, CLI, integration).
 - `bundle exec ruby exe/vizult help` — lists `scan`, `render`, `open`, `query`, `diff`, `version` (see `scan` for `--siblings-scan`, `--infer-org-links`).
 - Smoke on a real tree, e.g. `bundle exec ruby exe/vizult scan /path/to/deepiri-platform --siblings` (or `--siblings-scan` for merged subgraphs per sister repo).

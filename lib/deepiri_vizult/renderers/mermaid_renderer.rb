@@ -28,18 +28,18 @@ module DeepiriVizult
       end
 
       def write_all(output_dir)
-        require "fileutils"
+        require 'fileutils'
         FileUtils.mkdir_p(output_dir)
-        File.write(File.join(output_dir, "system.mmd"), render_system)
-        File.write(File.join(output_dir, "repos.mmd"), render_repos)
-        File.write(File.join(output_dir, "data-flow.mmd"), render_data_flow)
-        File.write(File.join(output_dir, "http.mmd"), render_http)
+        File.write(File.join(output_dir, 'system.mmd'), render_system)
+        File.write(File.join(output_dir, 'repos.mmd'), render_repos)
+        File.write(File.join(output_dir, 'data-flow.mmd'), render_data_flow)
+        File.write(File.join(output_dir, 'http.mmd'), render_http)
       end
 
       private
 
       def build_chart(edges)
-        lines = ["flowchart LR"]
+        lines = ['flowchart LR']
         used_ids = edges.flat_map { |e| [e[:from], e[:to]] }.uniq
         used_ids.each do |id|
           n = @graph.nodes[id]
@@ -60,8 +60,8 @@ module DeepiriVizult
         edges.each do |e|
           from = mermaid_id(e[:from])
           to = mermaid_id(e[:to])
-          label = e[:type].to_s.tr("_", " ")
-          arrow = inferred_weak_edge?(e) ? "-.->" : "-->"
+          label = e[:type].to_s.tr('_', ' ')
+          arrow = inferred_weak_edge?(e) ? '-.->' : '-->'
           lines << "  #{from} #{arrow}|#{label}| #{to}"
         end
 
@@ -69,11 +69,11 @@ module DeepiriVizult
       end
 
       def mermaid_id(str)
-        str.to_s.gsub(/[^\w]/, "_").sub(/\A(\d)/, "n\\1")
+        str.to_s.gsub(/[^\w]/, '_').sub(/\A(\d)/, 'n\\1')
       end
 
       def escape_label(str)
-        str.to_s.gsub(/["\n]/, " ").strip[0, 80]
+        str.to_s.gsub(/["\n]/, ' ').strip[0, 80]
       end
 
       def inferred_weak_edge?(e)

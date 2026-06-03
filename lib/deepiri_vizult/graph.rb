@@ -78,4 +78,3 @@ module DeepiriVizult
     end
   end
 end
-

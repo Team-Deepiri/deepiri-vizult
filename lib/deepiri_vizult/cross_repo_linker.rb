@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "pathname"
+require 'pathname'
 
 module DeepiriVizult
   # Infers weak structural links between co-located git clones when no evidence edge connects them.
@@ -49,7 +49,7 @@ module DeepiriVizult
             confidence: :low,
             source_file: nil,
             line_number: nil,
-            metadata: { inference: true, reason: "same_parent_directory_no_wire_detected" }
+            metadata: { inference: true, reason: 'same_parent_directory_no_wire_detected' }
           )
         end
       end
@@ -73,7 +73,7 @@ module DeepiriVizult
             confidence: :low,
             source_file: nil,
             line_number: nil,
-            metadata: { inference: true, reason: "shared_git_remote_org" }
+            metadata: { inference: true, reason: 'shared_git_remote_org' }
           )
         end
       end
