@@ -18,8 +18,8 @@ Gem::Specification.new do |spec|
     'rubygems_mfa_required' => 'true'
   }
 
-  spec.files = Dir['lib/**/*', 'exe/*', 'README.md', 'ROADMAP.md', 'docs/**/*.md', 'LICENSE', 'NOTICE', 'Rakefile',
-                   '*.gemspec', 'spec/**/*']
+  spec.files = Dir['lib/**/*', 'exe/*', 'README.md', 'CHANGELOG.md', 'ROADMAP.md', 'docs/**/*.md', 'LICENSE',
+                   'NOTICE', 'Rakefile', '*.gemspec', 'spec/**/*']
   spec.bindir        = 'exe'
   spec.executables   = ['vizult']
   spec.require_paths = ['lib']
