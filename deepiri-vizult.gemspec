@@ -18,12 +18,13 @@ Gem::Specification.new do |spec|
     'rubygems_mfa_required' => 'true'
   }
 
-  spec.files = Dir['lib/**/*', 'exe/*', 'README.md', 'CHANGELOG.md', 'ROADMAP.md', 'docs/**/*.md', 'LICENSE',
+  spec.files = Dir['lib/**/*', 'exe/*', 'README.md', 'ROADMAP.md', 'docs/**/*.md', 'LICENSE',
                    'NOTICE', 'Rakefile', '*.gemspec', 'spec/**/*']
   spec.bindir        = 'exe'
   spec.executables   = ['vizult']
   spec.require_paths = ['lib']
 
+  spec.add_dependency 'csv'
   spec.add_dependency 'thor', '~> 1.3'
   spec.add_development_dependency 'rake', '~> 13.0'
   spec.add_development_dependency 'rspec', '~> 3.12'
