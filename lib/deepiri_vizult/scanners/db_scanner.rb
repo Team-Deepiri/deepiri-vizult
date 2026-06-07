@@ -23,15 +23,11 @@ module DeepiriVizult
 
       private
 
-      def scan_env_in_files
-        patterns = ["**/.env.example", "**/.env.sample", "**/docker-compose*.yml"]
-        patterns.each do |pat|
-          Dir.glob(@root.join(pat), File::FNM_DOTMATCH).each do |p|
-            next unless File.file?(p)
-            next if p.include?("node_modules")
+      ENV_FILE = /\A(?:\.env\.example|\.env\.sample|docker-compose.*\.ya?ml)\z/.freeze
 
-            scan_text_file(Pathname.new(p))
-          end
+      def scan_env_in_files
+        ProjectFiles.list(@root).each do |p|
+          scan_text_file(p) if p.basename.to_s.match?(ENV_FILE)
         end
       end
 
@@ -62,17 +58,34 @@ module DeepiriVizult
       end
 
       def extract_host(connection_string)
-        return Regexp.last_match(1) if connection_string =~ %r{//([^/:]+)[:/]}
+        host =
+          if connection_string =~ %r{//([^/:]+)[:/]}
+            Regexp.last_match(1)
+          else
+            connection_string
+          end
+        return nil unless plausible_host?(host)
 
-        connection_string
+        host
+      end
+
+      # File-backed / relative connection strings (e.g. `sqlite:///./app.db`)
+      # yield hosts like `.` or `..` that are not real database hosts.
+      def plausible_host?(host)
+        return false if host.nil?
+
+        h = host.strip
+        return false if h.empty?
+        return false if h == "." || h == ".."
+        return false unless h.match?(/[A-Za-z0-9]/)
+
+        true
       end
 
       def scan_prisma
-        Dir.glob(@root.join("**/schema.prisma"), File::FNM_DOTMATCH).each do |p|
-          next unless File.file?(p)
-          next if p.include?("node_modules")
+        ProjectFiles.list(@root).each do |path|
+          next unless path.basename.to_s == "schema.prisma"
 
-          path = Pathname.new(p)
           text = File.read(path, encoding: "UTF-8")
           if (m = text.match(/provider\s*=\s*"(\w+)"/))
             provider = m[1]

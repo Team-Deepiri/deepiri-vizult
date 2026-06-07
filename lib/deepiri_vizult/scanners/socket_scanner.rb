@@ -13,8 +13,6 @@ module DeepiriVizult
         /proxy.*socket\.io/i
       ].freeze
 
-      SKIP_DIRS = %w[node_modules vendor/bundle .git].freeze
-
       def initialize(root:, graph:, registry:, max_depth: 12)
         @root = Pathname.new(root).expand_path
         @graph = graph
@@ -31,19 +29,15 @@ module DeepiriVizult
 
       def files
         exts = %w[.ts .tsx .js .jsx .vue .py]
-        out = []
-        Dir.glob(@root.join("**/*"), File::FNM_DOTMATCH).each do |p|
-          next unless File.file?(p)
-
-          rel = Pathname.new(p).relative_path_from(@root)
-          next if rel.to_s.split(File::SEPARATOR).size > @max_depth
-          next if rel.to_s.split(File::SEPARATOR).any? { |d| SKIP_DIRS.include?(d) }
-
-          next unless exts.include?(File.extname(p))
-
-          out << Pathname.new(p)
+        ProjectFiles.list(@root).select do |p|
+          exts.include?(p.extname) && within_depth?(p)
         end
-        out
+      end
+
+      def within_depth?(path)
+        path.relative_path_from(@root).to_s.split(File::SEPARATOR).size <= @max_depth
+      rescue ArgumentError
+        true
       end
 
       def scan_file(path)
