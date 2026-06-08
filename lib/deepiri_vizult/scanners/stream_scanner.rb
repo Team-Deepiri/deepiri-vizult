@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "pathname"
+require 'pathname'
 
 module DeepiriVizult
   module Scanners
@@ -11,14 +11,14 @@ module DeepiriVizult
         /XADD\s+['"]([^'"]+)['"]/i,
         /producer\.send\s*\(\s*['"]([^'"]+)['"]/,
         /send\s*\(\s*['"]([^'"]+)['"]\s*,/, # kafka generic
-        %r|topics?\s*[=:]\s*['"]([^'"]+)['"]|
+        /topics?\s*[=:]\s*['"]([^'"]+)['"]/
       ].freeze
 
       CONSUME = [
         /xreadgroup\s+[^'"]*['"]([^'"]+)['"]/i,
         /xread\s+[^'"]*['"]([^'"]+)['"]/i,
         /subscribe\s*\(\s*['"]([^'"]+)['"]/,
-        /consumer\.subscribe\s*\(\s*\{?\s*topic[s]?\s*:\s*['"]([^'"]+)['"]/,
+        /consumer\.subscribe\s*\(\s*\{?\s*topics?\s*:\s*['"]([^'"]+)['"]/,
         /from\s+['"]([^'"]+)['"]\s*# kafka/i
       ].freeze
 
@@ -41,7 +41,7 @@ module DeepiriVizult
       def files
         exts = %w[.ts .tsx .js .jsx .py .go .rb]
         files = []
-        Dir.glob(@root.join("**/*"), File::FNM_DOTMATCH).each do |p|
+        Dir.glob(@root.join('**/*'), File::FNM_DOTMATCH).each do |p|
           next unless File.file?(p)
 
           rel = Pathname.new(p).relative_path_from(@root)
@@ -56,7 +56,7 @@ module DeepiriVizult
       end
 
       def scan_file(path)
-        text = File.read(path, encoding: "UTF-8")
+        text = File.read(path, encoding: 'UTF-8')
         lines = text.lines
         owner = @path_resolver.owning_service(path, @root)
         return unless owner
@@ -103,7 +103,7 @@ module DeepiriVizult
           end
         end
       rescue StandardError => e
-        warn "vizult: stream scan #{path}: #{e.message}" if ENV["VIZULT_DEBUG"]
+        warn "vizult: stream scan #{path}: #{e.message}" if ENV['VIZULT_DEBUG']
       end
 
       def ensure_stream_node(topic)
@@ -114,7 +114,7 @@ module DeepiriVizult
       end
 
       def sanitize_id(topic)
-        topic.gsub(/[^\w\-:.]/, "_")[0, 120]
+        topic.gsub(/[^\w\-:.]/, '_')[0, 120]
       end
     end
   end

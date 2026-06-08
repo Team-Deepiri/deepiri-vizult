@@ -63,7 +63,8 @@ Run tests: `bundle exec rake` or `bundle exec rspec`.
 
 ## Verification checklist
 
-- `./bin/setup --verify` — bundle install + full RSpec (same as CI-style check).
+- `./bin/setup --verify` — bundle install + RuboCop + full RSpec (same as CI-style check).
+- `bundle exec rubocop` — style/lint (also runs in CI `lint` job).
 - `bundle exec rspec` — full suite (graph merge, sibling / manifest linkers, HTML viewer, DOT/CSV, submodule paths, scanners, CLI, integration).
 - `bundle exec ruby exe/vizult help` — lists `scan`, `render`, `open`, `query`, `diff`, `version` (see `scan` for `--siblings-scan`, `--infer-org-links`).
 - Smoke on a real tree, e.g. `bundle exec ruby exe/vizult scan /path/to/deepiri-platform --siblings` (or `--siblings-scan` for merged subgraphs per sister repo).
@@ -73,22 +74,24 @@ Run tests: `bundle exec rake` or `bundle exec rspec`.
 
 ## Outputs
 
-| File | Description |
-|------|-------------|
-| `vizult-output/graph.json` | Full typed graph (nodes, edges, evidence) |
-| `vizult-output/system.mmd` | Mermaid flowchart (all edges) |
-| `vizult-output/repos.mmd` | Repo / import relationships |
-| `vizult-output/data-flow.mmd` | Streams + DB access |
-| `vizult-output/http.mmd` | HTTP proxy + calls |
-| `vizult-output/*.dot` | Graphviz (same views as Mermaid; `dot -Tpng system.dot -o out.png`) |
-| `vizult-output/edges.csv` | All edges (from, to, type, confidence, file, line) |
-| `vizult-output/index.html` | Offline graph viewer (filters include min confidence) |
+
+| File                          | Description                                                         |
+| ----------------------------- | ------------------------------------------------------------------- |
+| `vizult-output/graph.json`    | Full typed graph (nodes, edges, evidence)                           |
+| `vizult-output/system.mmd`    | Mermaid flowchart (all edges)                                       |
+| `vizult-output/repos.mmd`     | Repo / import relationships                                         |
+| `vizult-output/data-flow.mmd` | Streams + DB access                                                 |
+| `vizult-output/http.mmd`      | HTTP proxy + calls                                                  |
+| `vizult-output/*.dot`         | Graphviz (same views as Mermaid; `dot -Tpng system.dot -o out.png`) |
+| `vizult-output/edges.csv`     | All edges (from, to, type, confidence, file, line)                  |
+| `vizult-output/index.html`    | Offline graph viewer (filters include min confidence)               |
+
 
 Set `VIZULT_DEBUG=1` to print parse warnings.
 
 ## Interpreting output
 
-See [docs/INTERPRETING.md](docs/INTERPRETING.md) for node/edge types, confidence levels, and limits.
+See [docs/INTERPRETING.md](docs/INTERPRETING.md) for node/edge types, confidence levels, and limits. 
 
 ## Roadmap
 

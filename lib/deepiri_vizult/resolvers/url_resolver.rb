@@ -1,11 +1,34 @@
 # frozen_string_literal: true
 
-require "uri"
+require 'uri'
 
 module DeepiriVizult
   class UrlResolver
+    MAX_URL_LENGTH = 2048
+
     def initialize(registry)
       @registry = registry
+    end
+
+    def strip_template(url_string)
+      # strip templates ${VAR} or %(VAR) no Regex for saftey
+      return '' if url_string.length > MAX_URL_LENGTH
+
+      while (open = url_string.index('${'))
+        close = url_string.index('}', open)
+        return '' if close.nil?
+
+        url_string = url_string[0...open] + url_string[(close + 1)..]
+      end
+
+      while (open = url_string.index('%('))
+        close = url_string.index(')', open)
+        return '' if close.nil?
+
+        url_string = url_string[0...open] + url_string[(close + 1)..]
+      end
+
+      url_string
     end
 
     # Returns service name string or nil
@@ -13,9 +36,9 @@ module DeepiriVizult
       return nil if url_string.nil? || url_string.to_s.strip.empty?
 
       s = url_string.to_s.strip
-      # strip template ${VAR}
-      s = s.gsub(/\$\{[^}]+\}/, "").gsub(/%\([^)]+\)/, "")
-      return nil if s.empty? || s == "http://" || s == "https://"
+      s = strip_template(s)
+
+      return nil if s.empty? || s == 'http://' || s == 'https://'
 
       uri = URI.parse((s.match?(%r{\A[\w+.-]+://}) ? s : "http://#{s}"))
       host = uri.host&.downcase
@@ -27,10 +50,11 @@ module DeepiriVizult
           next unless h.downcase == host
 
           cport = data[:ports][:container]
-          if port && cport && port != cport && port != 80 && port != 443
+          if port && cport && port != cport && port != 80 && port != 443 && cport
             # still match if registry has no container port
-            next if cport
+            next
           end
+
           return name
         end
       end
