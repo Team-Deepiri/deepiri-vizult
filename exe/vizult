@@ -1,9 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-$LOAD_PATH.unshift File.expand_path("../lib", __dir__)
+$LOAD_PATH.unshift File.expand_path('../lib', __dir__)
 
-require "deepiri_vizult/cli"
+require 'deepiri_vizult/cli'
 
 DeepiriVizult::CLI.start(ARGV)
-

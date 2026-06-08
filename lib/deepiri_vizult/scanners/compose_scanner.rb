@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-require "yaml"
-require "pathname"
+require 'yaml'
+require 'pathname'
 
 module DeepiriVizult
   module Scanners
     class ComposeScanner
-      ENV_URL_KEYS = /_URL$|_HOST$|_URI$|_SERVICE$/i.freeze
+      ENV_URL_KEYS = /_URL$|_HOST$|_URI$|_SERVICE$/i
 
       def initialize(root:, graph:, registry:, max_depth: 10)
         @root = Pathname.new(root).expand_path
@@ -24,9 +24,9 @@ module DeepiriVizult
       private
 
       def compose_files
-        patterns = ["docker-compose*.yml", "docker-compose*.yaml", "compose.yml", "compose.yaml"]
+        patterns = ['docker-compose*.yml', 'docker-compose*.yaml', 'compose.yml', 'compose.yaml']
         files = []
-        Dir.glob(@root.join("**/*"), File::FNM_DOTMATCH).each do |p|
+        Dir.glob(@root.join('**/*'), File::FNM_DOTMATCH).each do |p|
           next unless File.file?(p)
 
           rel = Pathname.new(p).relative_path_from(@root)
@@ -42,21 +42,19 @@ module DeepiriVizult
       end
 
       def process_file(path)
-        text = File.read(path, encoding: "UTF-8")
+        text = File.read(path, encoding: 'UTF-8')
         data = YAML.safe_load(text, permitted_classes: [Symbol, Time], aliases: true) || {}
-        services = data["services"] || {}
+        services = data['services'] || {}
         compose_rel = path.relative_path_from(@root).to_s
 
         services.each do |svc_name, svc_def|
           next if svc_def.nil? || !svc_def.is_a?(Hash)
 
           register_service(svc_name, svc_def, path, compose_rel)
-        end
 
-        services.each do |svc_name, svc_def|
           next if svc_def.nil? || !svc_def.is_a?(Hash)
 
-          deps = svc_def["depends_on"]
+          deps = svc_def['depends_on']
           case deps
           when Array
             deps.each do |dep|
@@ -70,12 +68,12 @@ module DeepiriVizult
           end
         end
       rescue Psych::SyntaxError, StandardError => e
-        warn "vizult: skip compose #{path}: #{e.message}" if ENV["VIZULT_DEBUG"]
+        warn "vizult: skip compose #{path}: #{e.message}" if ENV['VIZULT_DEBUG']
       end
 
       def register_service(name, svc_def, compose_path, compose_rel)
         hostnames = [name]
-        ports = extract_ports(svc_def["ports"])
+        ports = extract_ports(svc_def['ports'])
         source_dirs = extract_build_contexts(svc_def, compose_path.dirname)
         env_refs = extract_env(svc_def)
 
@@ -111,8 +109,8 @@ module DeepiriVizult
         first = arr.first
         case first
         when String
-          if first.include?(":")
-            parts = first.split(":")
+          if first.include?(':')
+            parts = first.split(':')
             out[:host] = parts[0].to_i if parts[0].match?(/^\d+$/)
             out[:container] = parts[-1].to_i if parts[-1].match?(/^\d+$/)
           elsif first.match?(/^\d+$/)
@@ -121,18 +119,18 @@ module DeepiriVizult
             out[:container] = p
           end
         when Hash
-          out[:host] = first["published"]&.to_i
-          out[:container] = first["target"]&.to_i
+          out[:host] = first['published']&.to_i
+          out[:container] = first['target']&.to_i
         end
         out
       end
 
       def extract_build_contexts(svc_def, compose_dir)
         dirs = []
-        b = svc_def["build"]
+        b = svc_def['build']
         return dirs unless b
 
-        ctx = b.is_a?(Hash) ? b["context"] : b
+        ctx = b.is_a?(Hash) ? b['context'] : b
         if ctx
           d = compose_dir.join(ctx).expand_path
           dirs << d if d.directory?
@@ -142,7 +140,7 @@ module DeepiriVizult
         # via `dockerfile: backend/<svc>/Dockerfile`. The dockerfile's directory is the actual
         # per-service location and is what PathResolver needs to attribute source files (prisma
         # schemas, .ts files, etc.) to the right owner.
-        if b.is_a?(Hash) && (df = b["dockerfile"])
+        if b.is_a?(Hash) && (df = b['dockerfile'])
           base = ctx ? compose_dir.join(ctx) : compose_dir
           df_dir = base.join(File.dirname(df.to_s)).expand_path
           dirs << df_dir if df_dir.directory? && !dirs.include?(df_dir)
@@ -153,13 +151,13 @@ module DeepiriVizult
 
       def extract_env(svc_def)
         refs = {}
-        env = svc_def["environment"]
+        env = svc_def['environment']
         case env
         when Hash
           env.each { |k, v| store_env_ref(refs, k, v) }
         when Array
           env.each do |line|
-            k, v = line.to_s.split("=", 2)
+            k, v = line.to_s.split('=', 2)
             store_env_ref(refs, k, v) if k
           end
         end

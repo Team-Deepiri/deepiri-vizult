@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "pathname"
+require 'pathname'
 
 module DeepiriVizult
   module Scanners
     class DbScanner
-      DB_ENV = /(?:DATABASE_URL|MONGO_URI|REDIS_URL|MILVUS_|POSTGRES_|MYSQL_|ELASTICSEARCH_)/i.freeze
+      DB_ENV = /(?:DATABASE_URL|MONGO_URI|REDIS_URL|MILVUS_|POSTGRES_|MYSQL_|ELASTICSEARCH_)/i
 
       def initialize(root:, graph:, registry:, max_depth: 12)
         @root = Pathname.new(root).expand_path
@@ -24,11 +24,11 @@ module DeepiriVizult
       private
 
       def scan_env_in_files
-        patterns = ["**/.env.example", "**/.env.sample", "**/docker-compose*.yml"]
+        patterns = ['**/.env.example', '**/.env.sample', '**/docker-compose*.yml']
         patterns.each do |pat|
           Dir.glob(@root.join(pat), File::FNM_DOTMATCH).each do |p|
             next unless File.file?(p)
-            next if p.include?("node_modules")
+            next if p.include?('node_modules')
 
             scan_text_file(Pathname.new(p))
           end
@@ -36,12 +36,12 @@ module DeepiriVizult
       end
 
       def scan_text_file(path)
-        text = File.read(path, encoding: "UTF-8")
+        text = File.read(path, encoding: 'UTF-8')
         text.each_line.with_index do |line, idx|
           next unless line.match?(DB_ENV)
           next unless line.match?(%r{@|://})
 
-          if (m = line.match(%r{(\w+)=['"]?([^'"\s]+)}))
+          if (m = line.match(/(\w+)=['"]?([^'"\s]+)/))
             _k, val = m.captures
             host = extract_host(val)
             next unless host
@@ -68,30 +68,33 @@ module DeepiriVizult
       end
 
       def scan_prisma
-        Dir.glob(@root.join("**/schema.prisma"), File::FNM_DOTMATCH).each do |p|
+        Dir.glob(@root.join('**/schema.prisma'), File::FNM_DOTMATCH).each do |p|
           next unless File.file?(p)
-          next if p.include?("node_modules")
+          next if p.include?('node_modules')
 
           path = Pathname.new(p)
-          text = File.read(path, encoding: "UTF-8")
-          if (m = text.match(/provider\s*=\s*"(\w+)"/))
-            provider = m[1]
-            url_line = text[/url\s*=\s*env\("([^"]+)"\)/, 1]
-            owner = @path_resolver.owning_service(path, @root)
-            db_id = "db:prisma-#{provider}"
-            @graph.add_node(id: db_id, type: :database, label: "#{provider} (prisma)", metadata: { provider: provider }) unless @graph.node?(db_id)
+          text = File.read(path, encoding: 'UTF-8')
+          next unless (m = text.match(/provider\s*=\s*"(\w+)"/))
 
-            if owner
-              @graph.add_edge(
-                from: "service:#{owner}",
-                to: db_id,
-                type: :db_access,
-                confidence: :medium,
-                source_file: path.to_s,
-                metadata: { env_var: url_line }
-              )
-            end
+          provider = m[1]
+          url_line = text[/url\s*=\s*env\("([^"]+)"\)/, 1]
+          owner = @path_resolver.owning_service(path, @root)
+          db_id = "db:prisma-#{provider}"
+          unless @graph.node?(db_id)
+            @graph.add_node(id: db_id, type: :database, label: "#{provider} (prisma)",
+                            metadata: { provider: provider })
           end
+
+          next unless owner
+
+          @graph.add_edge(
+            from: "service:#{owner}",
+            to: db_id,
+            type: :db_access,
+            confidence: :medium,
+            source_file: path.to_s,
+            metadata: { env_var: url_line }
+          )
         end
       end
 
@@ -103,7 +106,7 @@ module DeepiriVizult
       end
 
       def sanitize(s)
-        s.to_s.gsub(/[^\w\-]/, "_")[0, 80]
+        s.to_s.gsub(/[^\w-]/, '_')[0, 80]
       end
     end
   end

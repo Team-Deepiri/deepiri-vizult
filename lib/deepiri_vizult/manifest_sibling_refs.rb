@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-require "json"
-require "pathname"
+require 'json'
+require 'pathname'
 
 module DeepiriVizult
   # Detects relative path dependencies in manifests that point at co-located repo directory names.
   class ManifestSiblingRefs
     FILE_DEP = %r{file:\s*(\.\./|\./)([^"'\s]+)}i
     LINK_DEP = %r{link:\s*(\.\./|\./)([^"'\s]+)}i
-    GO_REPLACE = /replace\s+\S+\s+=>\s*(\.\.\/|\.\/)([^\s]+)/
+    GO_REPLACE = %r{replace\s+\S+\s+=>\s*(\.\./|\./)([^\s]+)}
 
     class << self
       def apply(graph, root)
@@ -28,17 +28,17 @@ module DeepiriVizult
         rid = "repo:#{repo_path.basename}"
         return unless graph.node?(rid)
 
-        pj = repo_path.join("package.json")
+        pj = repo_path.join('package.json')
         scan_package_json(graph, rid, pj, known_basenames) if pj.file?
 
-        gm = repo_path.join("go.mod")
+        gm = repo_path.join('go.mod')
         scan_go_mod(graph, rid, gm, known_basenames) if gm.file?
       end
 
       def scan_package_json(graph, from_repo_id, path, known_basenames)
-        data = JSON.parse(File.read(path, encoding: "UTF-8"))
+        data = JSON.parse(File.read(path, encoding: 'UTF-8'))
         %w[dependencies devDependencies peerDependencies].each do |key|
-          (data[key] || {}).each do |_pkg, ver|
+          (data[key] || {}).each_value do |ver|
             next unless ver.is_a?(String)
 
             targets = relative_targets(ver)
@@ -56,7 +56,7 @@ module DeepiriVizult
                 confidence: :medium,
                 source_file: path.to_s,
                 line_number: nil,
-                metadata: { manifest: "package.json" }
+                metadata: { manifest: 'package.json' }
               )
             end
           end
@@ -66,7 +66,7 @@ module DeepiriVizult
       end
 
       def scan_go_mod(graph, from_repo_id, path, known_basenames)
-        File.foreach(path, encoding: "UTF-8") do |line|
+        File.foreach(path, encoding: 'UTF-8') do |line|
           next unless (m = line.match(GO_REPLACE))
 
           base = m[2].to_s.split(%r{/}).first
@@ -84,7 +84,7 @@ module DeepiriVizult
             confidence: :medium,
             source_file: path.to_s,
             line_number: nil,
-            metadata: { manifest: "go.mod" }
+            metadata: { manifest: 'go.mod' }
           )
         end
       end
@@ -97,7 +97,7 @@ module DeepiriVizult
       end
 
       def basename_from_rel(fragment)
-        frag = fragment.to_s.sub(%r{\A\./}, "").sub(%r{/\z}, "")
+        frag = fragment.to_s.sub(%r{\A\./}, '').sub(%r{/\z}, '')
         return nil if frag.empty?
 
         parts = frag.split(%r{/})
