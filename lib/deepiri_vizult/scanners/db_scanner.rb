@@ -5,7 +5,7 @@ require 'pathname'
 module DeepiriVizult
   module Scanners
     class DbScanner
-      DB_ENV = /(?:DATABASE_URL|MONGO_URI|REDIS_URL|MILVUS_|POSTGRES_|MYSQL_|ELASTICSEARCH_)/i.freeze
+      DB_ENV = /(?:DATABASE_URL|MONGO_URI|REDIS_URL|MILVUS_|POSTGRES_|MYSQL_|ELASTICSEARCH_)/i
 
       def initialize(root:, graph:, registry:, max_depth: 12)
         @root = Pathname.new(root).expand_path
@@ -21,9 +21,9 @@ module DeepiriVizult
         scan_prisma
       end
 
-      private
+      ENV_FILE = /\A(?:\.env\.example|\.env\.sample|docker-compose.*\.ya?ml)\z/
 
-      ENV_FILE = /\A(?:\.env\.example|\.env\.sample|docker-compose.*\.ya?ml)\z/.freeze
+      private
 
       def scan_env_in_files
         ProjectFiles.list(@root).each do |p|
@@ -37,7 +37,7 @@ module DeepiriVizult
           next unless line.match?(DB_ENV)
           next unless line.match?(%r{@|://})
 
-          if (m = line.match(%r{(\w+)=['"]?([^'"\s]+)}))
+          if (m = line.match(/(\w+)=['"]?([^'"\s]+)/))
             _k, val = m.captures
             host = extract_host(val)
             next unless host
@@ -76,7 +76,7 @@ module DeepiriVizult
 
         h = host.strip
         return false if h.empty?
-        return false if h == '.' || h == '..'
+        return false if ['.', '..'].include?(h)
         return false unless h.match?(/[A-Za-z0-9]/)
 
         true
@@ -93,7 +93,8 @@ module DeepiriVizult
           url_line = text[/url\s*=\s*env\("([^"]+)"\)/, 1]
           owner = @path_resolver.owning_service(path, @root)
           db_id = "db:prisma-#{provider}"
-          @graph.add_node(id: db_id, type: :database, label: "#{provider} (prisma)", metadata: { provider: provider }) unless @graph.node?(db_id)
+          next if @graph.node?(db_id)
+          @graph.add_node(id: db_id, type: :database, label: "#{provider} (prisma)", metadata: { provider: provider })
 
           next unless owner
 

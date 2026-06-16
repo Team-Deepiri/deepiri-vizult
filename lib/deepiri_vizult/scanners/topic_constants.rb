@@ -18,10 +18,10 @@ module DeepiriVizult
     # is only used when exactly one definition with that name exists, so two
     # unrelated enums sharing a member name never resolve ambiguously.
     class TopicConstants
-      PY_CLASS  = /^\s*class\s+([A-Za-z_]\w*)/.freeze
-      PY_CONST  = /^(\s*)([A-Z][A-Z0-9_]*)\s*=\s*['"]([^'"]+)['"]/.freeze
-      TS_OPEN   = /(?:enum|const)\s+([A-Za-z_]\w*)/.freeze
-      TS_MEMBER = /([A-Za-z_]\w*)\s*[:=]\s*['"]([^'"]+)['"]/.freeze
+      PY_CLASS  = /^\s*class\s+([A-Za-z_]\w*)/
+      PY_CONST  = /^(\s*)([A-Z][A-Z0-9_]*)\s*=\s*['"]([^'"]+)['"]/
+      TS_OPEN   = /(?:enum|const)\s+([A-Za-z_]\w*)/
+      TS_MEMBER = /([A-Za-z_]\w*)\s*[:=]\s*['"]([^'"]+)['"]/
       TS_EXTS   = %w[.ts .tsx .js .jsx .mjs .cjs].freeze
 
       def initialize
@@ -86,11 +86,10 @@ module DeepiriVizult
             depth = 0
           end
 
-          if qualifier
-            line.scan(TS_MEMBER) { |name, value| add(qualifier, name, value) }
-            depth += line.count('{') - line.count('}')
-            qualifier = nil if depth <= 0
-          end
+          next unless qualifier
+          line.scan(TS_MEMBER) { |name, value| add(qualifier, name, value) }
+          depth += line.count('{') - line.count('}')
+          qualifier = nil if depth <= 0
         end
       end
     end

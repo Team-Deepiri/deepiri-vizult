@@ -41,8 +41,10 @@ module DeepiriVizult
 
       def scan
         fs = files
-        fs.each { |f| @topic_consts.add_file(f) }
-        fs.each { |f| scan_file(f) }
+        fs.each do |f|
+          @topic_consts.add_file(f)
+          scan_file(f)
+        end
       end
 
       private
