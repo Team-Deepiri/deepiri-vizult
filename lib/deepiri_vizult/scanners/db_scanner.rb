@@ -94,6 +94,7 @@ module DeepiriVizult
           owner = @path_resolver.owning_service(path, @root)
           db_id = "db:prisma-#{provider}"
           next if @graph.node?(db_id)
+
           @graph.add_node(id: db_id, type: :database, label: "#{provider} (prisma)", metadata: { provider: provider })
 
           next unless owner

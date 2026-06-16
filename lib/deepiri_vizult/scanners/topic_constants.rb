@@ -87,6 +87,7 @@ module DeepiriVizult
           end
 
           next unless qualifier
+
           line.scan(TS_MEMBER) { |name, value| add(qualifier, name, value) }
           depth += line.count('{') - line.count('}')
           qualifier = nil if depth <= 0
