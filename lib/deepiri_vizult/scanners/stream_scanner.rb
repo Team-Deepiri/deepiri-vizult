@@ -41,10 +41,10 @@ module DeepiriVizult
 
       def scan
         fs = files
-        fs.each do |f|
-          @topic_consts.add_file(f)
-          scan_file(f)
-        end
+        # rubocop:disable Style/CombinableLoops -- must load ALL constants before scanning
+        fs.each { |f| @topic_consts.add_file(f) }
+        fs.each { |f| scan_file(f) }
+        # rubocop:enable Style/CombinableLoops
       end
 
       private
