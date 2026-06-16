@@ -6,7 +6,6 @@ module DeepiriVizult
   module Scanners
     class SourceScanner
       EXTENSIONS = %w[.ts .tsx .js .jsx .mjs .cjs .py .go .rb].freeze
-      SKIP_DIRS = %w[node_modules vendor/bundle .git dist build coverage target].freeze
 
       # URL-like strings in code
       URL_IN_STRING = %r{["'`](https?://[^"'`\s]+)["'`]}
@@ -33,21 +32,15 @@ module DeepiriVizult
       private
 
       def source_files
-        files = []
-        Dir.glob(@root.join('**/*'), File::FNM_DOTMATCH).each do |p|
-          next unless File.file?(p)
-
-          rel = Pathname.new(p).relative_path_from(@root)
-          parts = rel.to_s.split(File::SEPARATOR)
-          next if parts.size > @max_depth
-          next if parts.any? { |part| SKIP_DIRS.include?(part) }
-
-          ext = File.extname(p)
-          next unless EXTENSIONS.include?(ext)
-
-          files << Pathname.new(p)
+        ProjectFiles.list(@root).select do |p|
+          EXTENSIONS.include?(p.extname) && within_depth?(p)
         end
-        files
+      end
+
+      def within_depth?(path)
+        path.relative_path_from(@root).to_s.split(File::SEPARATOR).size <= @max_depth
+      rescue ArgumentError
+        true
       end
 
       def scan_file(path)
