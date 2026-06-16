@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "pathname"
+require 'pathname'
 
 module DeepiriVizult
   # Built from compose/k8s only. No hardcoded service names.
@@ -30,12 +30,8 @@ module DeepiriVizult
       entry = @services[key]
       Array(hostnames).each { |h| entry[:hostnames] << h.to_s unless entry[:hostnames].include?(h.to_s) }
       entry[:hostnames] << key unless entry[:hostnames].include?(key)
-      if ports[:host]
-        entry[:ports][:host] = ports[:host]
-      end
-      if ports[:container]
-        entry[:ports][:container] = ports[:container]
-      end
+      entry[:ports][:host] = ports[:host] if ports[:host]
+      entry[:ports][:container] = ports[:container] if ports[:container]
       Array(source_dirs).each do |d|
         p = d.is_a?(Pathname) ? d : Pathname.new(d)
         entry[:source_dirs] << p.expand_path unless entry[:source_dirs].any? { |x| x.to_s == p.expand_path.to_s }
@@ -56,10 +52,11 @@ module DeepiriVizult
       @services.each do |name, data|
         next unless data[:hostnames].any? { |h| h.downcase == host }
 
-        if port && data[:ports][:container] && data[:ports][:container] != port.to_i
+        if port && data[:ports][:container] && data[:ports][:container] != port.to_i && data[:ports][:container]
           # allow match if port not specified on registry
-          next if data[:ports][:container]
+          next
         end
+
         return name
       end
       nil

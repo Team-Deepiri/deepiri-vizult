@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "json"
-require "set"
-require "pathname"
+require 'json'
+require 'set'
+require 'pathname'
 
 module DeepiriVizult
   module Scanners
@@ -25,18 +25,18 @@ module DeepiriVizult
       def build_known_names
         names = Set.new
         @registry.services.each_key { |k| names << k }
-        @graph.nodes.each do |id, n|
+        @graph.nodes.each_value do |n|
           names << n[:label] if n[:type] == :repo
         end
         names
       end
 
       def package_json_files
-        glob_package("package.json")
+        glob_package('package.json')
       end
 
       def gemfiles
-        glob_package("Gemfile")
+        glob_package('Gemfile')
       end
 
       def glob_package(basename)
@@ -49,7 +49,7 @@ module DeepiriVizult
       end
 
       def scan_package_json(path)
-        data = JSON.parse(File.read(path, encoding: "UTF-8"))
+        data = JSON.parse(File.read(path, encoding: 'UTF-8'))
         deps = {}
         %w[dependencies devDependencies peerDependencies].each do |k|
           deps.merge!(data[k] || {})
@@ -57,7 +57,7 @@ module DeepiriVizult
         pkg = path.dirname.basename.to_s
         from_id = "package:#{path.relative_path_from(@root)}"
 
-        deps.each do |name, _version|
+        deps.each_key do |name|
           next unless internal_package?(name)
 
           to = resolve_internal_target(name)
@@ -78,12 +78,12 @@ module DeepiriVizult
       end
 
       def internal_package?(name)
-        base = name.split(%r{[/]}).last
+        base = name.split(%r{/}).last
         @known_names.include?(name) || @known_names.include?(base) || @registry.services.key?(base)
       end
 
       def resolve_internal_target(name)
-        base = name.split(%r{[/]}).last
+        base = name.split(%r{/}).last
         return "service:#{base}" if @registry.services.key?(base)
 
         rid = "repo:#{base}"
@@ -93,7 +93,7 @@ module DeepiriVizult
       end
 
       def scan_gemfile(path)
-        text = File.read(path, encoding: "UTF-8")
+        text = File.read(path, encoding: 'UTF-8')
         text.scan(/gem\s+["']([^"']+)["']/).flatten.each do |g|
           next unless internal_package?(g)
 
@@ -101,8 +101,9 @@ module DeepiriVizult
           next unless to
 
           from_id = "package:#{path.relative_path_from(@root)}"
-          ensure_package_node(from_id, "gem", path)
-          @graph.add_edge(from: from_id, to: to, type: :imports, confidence: :low, source_file: path.to_s, metadata: { gem: g })
+          ensure_package_node(from_id, 'gem', path)
+          @graph.add_edge(from: from_id, to: to, type: :imports, confidence: :low, source_file: path.to_s,
+                          metadata: { gem: g })
         end
       end
 

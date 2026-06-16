@@ -32,6 +32,8 @@ echo "    bundle exec ruby exe/vizult open"
 echo ""
 
 if [[ "${1:-}" == "--verify" ]]; then
+  echo "==> Running RuboCop..."
+  bundle exec rubocop
   echo "==> Running RSpec..."
   bundle exec rspec
   echo "==> Verify OK."

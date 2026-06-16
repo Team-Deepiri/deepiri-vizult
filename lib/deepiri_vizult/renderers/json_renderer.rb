@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require "json"
-require "time"
+require 'json'
+require 'time'
 
 module DeepiriVizult
   module Renderers
@@ -21,7 +21,7 @@ module DeepiriVizult
       end
 
       def write(path)
-        File.write(path, render, encoding: "UTF-8")
+        File.write(path, render, encoding: 'UTF-8')
       end
     end
   end

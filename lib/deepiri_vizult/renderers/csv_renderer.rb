@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "csv"
+require 'csv'
 
 module DeepiriVizult
   module Renderers
@@ -28,7 +28,7 @@ module DeepiriVizult
       end
 
       def write(path)
-        File.write(path, render, encoding: "UTF-8")
+        File.write(path, render, encoding: 'UTF-8')
       end
     end
   end

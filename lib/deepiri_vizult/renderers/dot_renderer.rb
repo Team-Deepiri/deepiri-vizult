@@ -29,12 +29,12 @@ module DeepiriVizult
       end
 
       def write_all(output_dir)
-        require "fileutils"
+        require 'fileutils'
         FileUtils.mkdir_p(output_dir)
-        File.write(File.join(output_dir, "system.dot"), render_system)
-        File.write(File.join(output_dir, "repos.dot"), render_repos)
-        File.write(File.join(output_dir, "data-flow.dot"), render_data_flow)
-        File.write(File.join(output_dir, "http.dot"), render_http)
+        File.write(File.join(output_dir, 'system.dot'), render_system)
+        File.write(File.join(output_dir, 'repos.dot'), render_repos)
+        File.write(File.join(output_dir, 'data-flow.dot'), render_data_flow)
+        File.write(File.join(output_dir, 'http.dot'), render_http)
       end
 
       private
@@ -48,9 +48,9 @@ module DeepiriVizult
 
           nid = dot_id(id)
           shape = case n[:type]
-                  when :database then "cylinder"
-                  when :stream then "note"
-                  else "box"
+                  when :database then 'cylinder'
+                  when :stream then 'note'
+                  else 'box'
                   end
           label = escape_dot(n[:label].to_s)
           lines << "  #{nid} [label=\"#{label}\", shape=#{shape}];"
@@ -61,21 +61,21 @@ module DeepiriVizult
 
           lbl = "#{e[:type]} (#{e[:confidence]})".gsub('"', '\"')
           extra = []
-          extra << "style=dashed" << 'color="#888888"' if inferred_weak_edge?(e)
-          extra << 'color="#1a7f37"' << "penwidth=2" if e.dig(:metadata, :merged_scan)
-          attr = extra.empty? ? "" : ", #{extra.join(", ")}"
+          extra << 'style=dashed' << 'color="#888888"' if inferred_weak_edge?(e)
+          extra << 'color="#1a7f37"' << 'penwidth=2' if e.dig(:metadata, :merged_scan)
+          attr = extra.empty? ? '' : ", #{extra.join(', ')}"
           lines << "  #{dot_id(e[:from])} -> #{dot_id(e[:to])} [label=\"#{lbl}\"#{attr}];"
         end
-        lines << "}"
+        lines << '}'
         lines.join("\n")
       end
 
       def dot_id(str)
-        "n_" + str.to_s.gsub(/[^\w]/, "_").sub(/\A(\d)/, "x\\1")
+        "n_#{str.to_s.gsub(/[^\w]/, '_').sub(/\A(\d)/, 'x\\1')}"
       end
 
       def escape_dot(s)
-        s.gsub(/["\\\n\r]/, " ")[0, 120]
+        s.gsub(/["\\\n\r]/, ' ')[0, 120]
       end
 
       def inferred_weak_edge?(e)

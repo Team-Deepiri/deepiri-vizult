@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "pathname"
+require 'pathname'
 
 module DeepiriVizult
   module Scanners
@@ -12,14 +12,17 @@ module DeepiriVizult
       PUBLISH = [
         /\.publish\s*\(\s*(?:['"](?<lit>[^'"]+)['"]|(?<ref>[A-Za-z_][\w.]*))/,
         /\bxadd\s*\(\s*(?:['"](?<lit>[^'"]+)['"]|(?<ref>[A-Za-z_][\w.]*))/i,
+        /\bXADD\s+['"](?<lit>[^'"]+)['"]/i,
         /\bproducer\.send\s*\(\s*(?:['"](?<lit>[^'"]+)['"]|(?<ref>[A-Za-z_][\w.]*))/,
+        /\bsend\s*\(\s*['"](?<lit>[^'"]+)['"]\s*,/,
         /\btopics?\s*[=:]\s*['"](?<lit>[^'"]+)['"]/
       ].freeze
 
       CONSUME = [
         /\.subscribe\s*\(\s*(?:['"](?<lit>[^'"]+)['"]|(?<ref>[A-Za-z_][\w.]*))/,
         /\bconsumer\.subscribe\s*\(\s*\{?\s*topics?\s*:\s*['"](?<lit>[^'"]+)['"]/,
-        /\bxread\s*\(\s*\{?\s*['"](?<lit>[^'"]+)['"]/i,
+        /\bxreadgroup\s+[^'"]*['"](?<lit>[^'"]+)['"]/i,
+        /\bxread\s+[^'"]*['"](?<lit>[^'"]+)['"]/i,
         /from\s+['"](?<lit>[^'"]+)['"]\s*#\s*kafka/i
       ].freeze
 
@@ -58,7 +61,7 @@ module DeepiriVizult
       end
 
       def scan_file(path)
-        text = File.read(path, encoding: "UTF-8")
+        text = File.read(path, encoding: 'UTF-8')
         owner = @path_resolver.owning_service(path, @root)
         return unless owner
 
@@ -96,7 +99,7 @@ module DeepiriVizult
           )
         end
       rescue StandardError => e
-        warn "vizult: stream scan #{path}: #{e.message}" if ENV["VIZULT_DEBUG"]
+        warn "vizult: stream scan #{path}: #{e.message}" if ENV['VIZULT_DEBUG']
       end
 
       def match_calls(text, patterns)
@@ -117,8 +120,8 @@ module DeepiriVizult
       # index and dropped (never named after the symbol) when unresolved.
       def resolve_capture(match)
         names = match.names
-        lit = names.include?("lit") ? match[:lit] : nil
-        ref = names.include?("ref") ? match[:ref] : nil
+        lit = names.include?('lit') ? match[:lit] : nil
+        ref = names.include?('ref') ? match[:ref] : nil
 
         if lit && !lit.empty?
           return nil unless plausible_topic?(lit)
@@ -162,7 +165,7 @@ module DeepiriVizult
       end
 
       def sanitize_id(topic)
-        topic.gsub(/[^\w\-:.]/, "_")[0, 120]
+        topic.gsub(/[^\w\-:.]/, '_')[0, 120]
       end
     end
   end

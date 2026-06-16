@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "pathname"
+require 'pathname'
 
 module DeepiriVizult
   # Resolves checkout paths from .gitmodules under a repo root.
@@ -9,9 +9,9 @@ module DeepiriVizult
 
     def each_under(root)
       root = Pathname.new(root).expand_path
-      Pathname.glob(root.join("**/.gitmodules")).each do |gm|
+      Pathname.glob(root.join('**/.gitmodules')).each do |gm|
         current = nil
-        File.foreach(gm, encoding: "UTF-8") do |line|
+        File.foreach(gm, encoding: 'UTF-8') do |line|
           if (m = line.match(/^\[submodule "([^"]+)"\]/))
             current = m[1]
           elsif current && (m = line.match(/^\s*path\s*=\s*(.+)/))

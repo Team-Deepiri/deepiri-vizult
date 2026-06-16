@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "pathname"
+require 'pathname'
 
 module DeepiriVizult
   # Maps a source file path to owning service using longest matching build context.

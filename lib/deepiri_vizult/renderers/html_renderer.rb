@@ -1,22 +1,22 @@
 # frozen_string_literal: true
 
-require "erb"
-require "json"
+require 'erb'
+require 'json'
 
-require_relative "../version"
+require_relative '../version'
 
 module DeepiriVizult
   module Renderers
     class HtmlRenderer
-      CYTOSCAPE_CDN = "https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"
+      CYTOSCAPE_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js'
 
       def initialize(graph)
         @graph = graph
       end
 
       def render
-        template_path = File.join(__dir__, "..", "templates", "viewer.html.erb")
-        tpl = File.read(template_path, encoding: "UTF-8")
+        template_path = File.join(__dir__, '..', 'templates', 'viewer.html.erb')
+        tpl = File.read(template_path, encoding: 'UTF-8')
         erb = ERB.new(tpl)
         elements_json = cytoscape_elements_json
         graph_json = JSON.generate(@graph.to_h)
@@ -31,16 +31,15 @@ module DeepiriVizult
       end
 
       def write(path)
-        File.write(path, render, encoding: "UTF-8")
+        File.write(path, render, encoding: 'UTF-8')
       end
 
       private
 
       def cytoscape_elements_json
         node_ids = @graph.nodes.keys.to_h { |id| [id, true] }
-        elements = []
-        @graph.nodes.each do |id, n|
-          elements << {
+        elements = @graph.nodes.map do |id, n|
+          {
             data: {
               id: id,
               label: n[:label],

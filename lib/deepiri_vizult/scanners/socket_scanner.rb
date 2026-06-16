@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "pathname"
+require 'pathname'
 
 module DeepiriVizult
   module Scanners
@@ -41,13 +41,16 @@ module DeepiriVizult
       end
 
       def scan_file(path)
-        text = File.read(path, encoding: "UTF-8")
+        text = File.read(path, encoding: 'UTF-8')
         return unless PATTERNS.any? { |re| text.match?(re) }
 
         owner = @path_resolver.owning_service(path, @root)
         from_id = owner ? "service:#{owner}" : "repo:#{@root.basename}"
 
-        @graph.add_node(id: "endpoint:websocket", type: :endpoint, label: "WebSocket", metadata: {}) unless @graph.node?("endpoint:websocket")
+        unless @graph.node?('endpoint:websocket')
+          @graph.add_node(id: 'endpoint:websocket', type: :endpoint, label: 'WebSocket',
+                          metadata: {})
+        end
 
         lines = text.lines
         lines.each_with_index do |line, idx|
@@ -55,7 +58,7 @@ module DeepiriVizult
 
           @graph.add_edge(
             from: from_id,
-            to: "endpoint:websocket",
+            to: 'endpoint:websocket',
             type: :websocket,
             confidence: :low,
             source_file: path.to_s,

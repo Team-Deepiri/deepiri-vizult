@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-require "pathname"
-require "zlib"
+require 'pathname'
+require 'zlib'
 
-require_relative "submodule_paths"
-require_relative "sibling_roots"
-require_relative "cross_repo_linker"
-require_relative "manifest_sibling_refs"
+require_relative 'submodule_paths'
+require_relative 'sibling_roots'
+require_relative 'cross_repo_linker'
+require_relative 'manifest_sibling_refs'
 
 module DeepiriVizult
   # Orchestrates all scanners in order per plan.
@@ -101,11 +101,11 @@ module DeepiriVizult
     end
 
     def submodule_prefix(path)
-      "sm%x_" % (Zlib.crc32(path.to_s) & 0xffffffff)
+      format('sm%x_', Zlib.crc32(path.to_s) & 0xffffffff)
     end
 
     def sibling_prefix(path)
-      "sb%x_" % (Zlib.crc32(path.to_s) & 0xffffffff)
+      format('sb%x_', Zlib.crc32(path.to_s) & 0xffffffff)
     end
 
     def bridge_sibling_overlay!(prefix, basename_str)
@@ -132,7 +132,7 @@ module DeepiriVizult
     end
 
     def fetch_org_repos
-      return unless system("command -v gh >/dev/null 2>&1")
+      return unless system('command -v gh >/dev/null 2>&1')
 
       out = `gh api "orgs/#{@org}/repos" --paginate --jq '.[].name' 2>/dev/null`
       return if out.nil? || out.strip.empty?
