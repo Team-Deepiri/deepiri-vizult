@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require "pathname"
-require "open3"
+require 'pathname'
+require 'open3'
 
 module DeepiriVizult
   module Scanners
@@ -24,20 +24,20 @@ module DeepiriVizult
       def git_list(root)
         return nil unless git_repo?(root)
 
-        rels = run_git(root, "ls-files", "--recurse-submodules", "-z") +
-               run_git(root, "ls-files", "--others", "--exclude-standard", "-z")
+        rels = run_git(root, 'ls-files', '--recurse-submodules', '-z') +
+               run_git(root, 'ls-files', '--others', '--exclude-standard', '-z')
         rels.uniq.map { |rel| root.join(rel) }.select(&:file?)
       end
 
       def git_repo?(root)
-        out, status = Open3.capture2e("git", "-C", root.to_s, "rev-parse", "--is-inside-work-tree")
-        status.success? && out.strip == "true"
+        out, status = Open3.capture2e('git', '-C', root.to_s, 'rev-parse', '--is-inside-work-tree')
+        status.success? && out.strip == 'true'
       rescue StandardError
         false
       end
 
       def run_git(root, *args)
-        out, status = Open3.capture2("git", "-C", root.to_s, *args)
+        out, status = Open3.capture2('git', '-C', root.to_s, *args)
         return [] unless status.success?
 
         out.split("\x00").reject(&:empty?)
@@ -46,7 +46,7 @@ module DeepiriVizult
       end
 
       def glob_list(root)
-        Dir.glob(root.join("**/*"), File::FNM_DOTMATCH)
+        Dir.glob(root.join('**/*'), File::FNM_DOTMATCH)
            .select { |p| File.file?(p) }
            .map { |p| Pathname.new(p) }
       end

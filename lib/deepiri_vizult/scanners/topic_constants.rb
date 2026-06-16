@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "set"
+require 'set'
 
 module DeepiriVizult
   module Scanners
@@ -30,9 +30,9 @@ module DeepiriVizult
       end
 
       def add_file(path)
-        text = File.read(path, encoding: "UTF-8")
+        text = File.read(path, encoding: 'UTF-8')
         case File.extname(path.to_s)
-        when ".py" then scan_python(text)
+        when '.py' then scan_python(text)
         when *TS_EXTS then scan_ts(text)
         end
       rescue StandardError
@@ -48,7 +48,7 @@ module DeepiriVizult
       # A bare reference resolves only when exactly one definition exists.
       def resolve(ref)
         return @qualified[ref] if @qualified.key?(ref)
-        return nil if ref.include?(".")
+        return nil if ref.include?('.')
 
         values = @bare[ref]
         values.size == 1 ? values.first : nil
@@ -81,14 +81,14 @@ module DeepiriVizult
         qualifier = nil
         depth = 0
         text.each_line do |line|
-          if qualifier.nil? && (m = line.match(TS_OPEN)) && line.include?("{")
+          if qualifier.nil? && (m = line.match(TS_OPEN)) && line.include?('{')
             qualifier = m[1]
             depth = 0
           end
 
           if qualifier
             line.scan(TS_MEMBER) { |name, value| add(qualifier, name, value) }
-            depth += line.count("{") - line.count("}")
+            depth += line.count('{') - line.count('}')
             qualifier = nil if depth <= 0
           end
         end
