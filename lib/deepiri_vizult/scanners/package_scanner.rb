@@ -40,17 +40,12 @@ module DeepiriVizult
       end
 
       def glob_package(basename)
-        files = []
-        Dir.glob(@root.join("**/#{basename}"), File::FNM_DOTMATCH).each do |p|
-          next unless File.file?(p)
-
-          rel = Pathname.new(p).relative_path_from(@root)
-          next if rel.to_s.split(File::SEPARATOR).size > @max_depth
-          next if rel.to_s.include?('node_modules')
-
-          files << Pathname.new(p)
+        ProjectFiles.list(@root).select do |p|
+          p.basename.to_s == basename &&
+            p.relative_path_from(@root).to_s.split(File::SEPARATOR).size <= @max_depth
         end
-        files
+      rescue ArgumentError
+        []
       end
 
       def scan_package_json(path)
