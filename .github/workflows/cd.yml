@@ -1,0 +1,70 @@
+name: CD
+
+# Publish deepiri-vizult to RubyGems after verify passes.
+# Flow: green CI on main → bump VERSION + CHANGELOG → tag vX.Y.Z → publish GitHub Release.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+concurrency:
+  group: cd-rubygems
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify (lint & test)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+
+      - name: Verify release tag matches gem version
+        if: github.event_name == 'release'
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          TAG="${TAG#v}"
+          VERSION=$(ruby -r ./lib/deepiri_vizult/version -e 'puts DeepiriVizult::VERSION')
+          echo "Release tag: $TAG | Gem version: $VERSION"
+          test "$TAG" = "$VERSION"
+
+      - name: RuboCop
+        run: bundle exec rubocop
+
+      - name: RSpec
+        run: bundle exec rspec
+
+      - name: Gem build
+        run: gem build deepiri-vizult.gemspec
+
+  publish:
+    name: Publish to RubyGems
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+
+      - name: Build gem
+        run: gem build deepiri-vizult.gemspec
+
+      - name: Publish to RubyGems
+        run: gem push deepiri-vizult-*.gem
+        env:
+          GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}

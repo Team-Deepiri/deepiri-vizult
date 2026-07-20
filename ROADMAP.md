@@ -26,6 +26,7 @@ This document tracks **where the tool is today** and **planned evolution**. Prio
 | Package / source / stream / DB / WebSocket heuristics                              | Done   |
 | RSpec (incl. integration, merge, exports, submodule path parser)                   | Done   |
 | **GitHub Actions** CI (`rspec`, `gem build`, RuboCop, Ruby version matrix 3.0-3.2) | Done   |
+| **CD** (verify → RubyGems publish on release) + `CHANGELOG.md`                     | Done   |
 | **docs/INTERPRETING.md**                                                           | Done   |
 | Apache 2.0 + `NOTICE`                                                              | Done   |
 
@@ -36,7 +37,7 @@ This document tracks **where the tool is today** and **planned evolution**. Prio
 
 1. **Accuracy & noise** — Tune regex families (especially stream/Kafka); optional “strict” mode.
 2. **Dedup** — When `--submodules` overlaps main-tree scan, optional dedupe or provenance tags only.
-3. **RubyGems** — Publish workflow + changelog on release. 
+3. **RubyGems** — Publish workflow + changelog on release. *(Shipped: `.github/workflows/cd.yml`, `CHANGELOG.md`.)*
 
 ---
 

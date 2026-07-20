@@ -91,7 +91,23 @@ Set `VIZULT_DEBUG=1` to print parse warnings.
 
 ## Interpreting output
 
-See [docs/INTERPRETING.md](docs/INTERPRETING.md) for node/edge types, confidence levels, and limits. 
+See [docs/INTERPRETING.md](docs/INTERPRETING.md) for node/edge types, confidence levels, and limits.
+
+## Releasing to RubyGems (CD)
+
+CI on `main` / `dev` must be green before you tag. The **CD** workflow (`.github/workflows/cd.yml`) re-runs RuboCop + RSpec, then publishes the gem.
+
+1. Bump `lib/deepiri_vizult/version.rb` and update [CHANGELOG.md](CHANGELOG.md).
+2. Commit and merge to `main` (with passing CI).
+3. Tag and publish a GitHub Release. The tag must be `vX.Y.Z` matching the gem version (e.g. `v0.4.1`):
+   ```bash
+   git tag v0.4.1
+   git push origin v0.4.1
+   ```
+   Then create a **Published** release from that tag on GitHub (Actions → **CD** runs).
+4. Repo secret **`RUBYGEMS_API_KEY`**: RubyGems API key with push access ([create key](https://rubygems.org/profile/api_keys)).
+
+Manual rerun (no new release): Actions → **CD** → **Run workflow**.
 
 ## Roadmap
 
