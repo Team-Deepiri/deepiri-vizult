@@ -11,7 +11,7 @@ GEM
     ast (2.4.3)
     csv (3.3.5)
     diff-lcs (1.6.2)
-    json (2.19.8)
+    json (2.19.9)
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
     parallel (1.28.0)
