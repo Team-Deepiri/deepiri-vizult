@@ -3,15 +3,23 @@ name: CI
 on:
   pull_request:
     branches: [main, dev]
-  push:
-    branches: [main, dev]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE*'
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
+    timeout-minutes: 20
     name: Test & Build gem
     runs-on: ubuntu-latest
     steps:
@@ -28,6 +36,7 @@ jobs:
         run: gem build deepiri-vizult.gemspec
 
   lint:
+    timeout-minutes: 20
     name: Lint (RuboCop)
     runs-on: ubuntu-latest
     steps:
